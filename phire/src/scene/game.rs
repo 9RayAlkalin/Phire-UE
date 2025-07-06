@@ -488,10 +488,10 @@ impl GameScene {
         if res.config.interactive
             && !tm.paused()
             && self.pause_rewind.time.is_none()
-            && Judge::get_touches(1.0).iter().any(|touch| {
+            && Judge::get_touches(res.config.chart_ratio).iter().any(|touch| {
                 touch.phase == TouchPhase::Started && {
                     let p = touch.position;
-                    let p = Point::new(p.x / res.config.chart_ratio * screen_aspect, p.y / res.config.chart_ratio * screen_aspect);
+                    let p = Point::new(p.x * screen_aspect, p.y * screen_aspect);
                     (pause_center - p).norm() < 0.05
                 }
             })
