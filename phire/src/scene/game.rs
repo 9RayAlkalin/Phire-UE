@@ -174,6 +174,12 @@ macro_rules! reset {
     }};
 }
 
+macro_rules! reset_music_speed {
+    ($self:ident, $res:expr, $tm:ident) => {{
+        debug!("recreate music");
+        $self.music = $res.audio.create_music(
+            $res.music.clone(),
+            MusicParams {
                 amplifier: $res.config.volume_music as _,
                 playback_rate: $res.config.speed as _,
                 ..Default::default()
@@ -917,6 +923,10 @@ impl GameScene {
         self.chart.offset + self.res.config.offset + self.info_offset
     }
 
+    fn offset_chart(&self) -> f32 {
+        self.chart.offset + self.info_offset
+    }
+
     fn tweak_offset(&mut self, ui: &mut Ui, ita: bool, tm: &mut TimeManager) {
         let width = 0.55;
         let height = 0.3;
@@ -1041,7 +1051,6 @@ impl Scene for GameScene {
             tm.pause();
             self.music.pause()?;
         }
-        let offset = self.offset();
         let time = tm.now() as f32;
         let time = match self.state {
         State::Starting => {
@@ -1129,11 +1138,11 @@ impl Scene for GameScene {
         };
 
         let time = if self.mode == GameMode::TweakOffset {
-            time.max(0.)
+            time.max(0.) - self.offset_chart()
         } else if self.res.config.adjust_time {
-            (time - offset - get_latency(&self.res.audio, &self.res.frame_times)).max(0.)
+            (time - self.offset() - get_latency(&self.res.audio, &self.res.frame_times)).max(0.)
         } else {
-            (time - offset).max(0.)
+            (time - self.offset()).max(0.)
         };
         self.res.time = time;
         if !tm.paused() /*&& self.pause_rewind.is_none()*/ && self.mode != GameMode::View {
