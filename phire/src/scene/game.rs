@@ -477,6 +477,7 @@ impl GameScene {
         let c = Color::new(1., 1., 1., self.res.alpha);
         let res = &mut self.res;
         let aspect_ratio = res.aspect_ratio;
+        let screen_aspect = screen_aspect();
         let scale_ratio = 1.777777;
         let top = -1.;
         let eps = 2e-2;
@@ -490,7 +491,7 @@ impl GameScene {
             && Judge::get_touches(1.0).iter().any(|touch| {
                 touch.phase == TouchPhase::Started && {
                     let p = touch.position;
-                    let p = Point::new(p.x * aspect_ratio / res.config.chart_ratio, p.y * aspect_ratio / res.config.chart_ratio);
+                    let p = Point::new(p.x / res.config.chart_ratio * screen_aspect, p.y / res.config.chart_ratio * screen_aspect);
                     (pause_center - p).norm() < 0.05
                 }
             })
