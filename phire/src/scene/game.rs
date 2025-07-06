@@ -174,6 +174,21 @@ macro_rules! reset {
     }};
 }
 
+                amplifier: $res.config.volume_music as _,
+                playback_rate: $res.config.speed as _,
+                ..Default::default()
+            },
+        ).expect("failed to create music");
+        $tm.pause();
+        $self.music.pause();
+        let now = $tm.now();
+        $tm.speed = $res.config.speed as _;
+        $tm.seek_to(now);
+        $self.music.seek_to(now as f32);
+    }};
+}
+
+
 impl GameScene {
     pub const BEFORE_TIME: f32 = 0.7;
     pub const BEFORE_DURATION: f32 = 1.2;
@@ -714,16 +729,8 @@ impl GameScene {
                     clicked = None;
                 }
                 let mut pos = self.music.position();
-                if clicked.map_or(false, |it| it != -1) && (tm.speed - res.config.speed as f64).abs() > 0.01 {
-                    debug!("recreating music");
-                    self.music = res.audio.create_music(
-                        res.music.clone(),
-                        MusicParams {
-                            amplifier: res.config.volume_music as _,
-                            playback_rate: res.config.speed as _,
-                            ..Default::default()
-                        },
-                    )?;
+                if clicked.map_or(false, |it| it != -1) && (tm.speed - res.config.speed as f64).abs() > 1e-3 {
+                    reset_music_speed!(self, res, tm);
                 }
                 match clicked {
                     Some(-1) => {
@@ -739,7 +746,7 @@ impl GameScene {
                         res.config.disable_audio = true;
                     }
                     Some(1) => {
-                        if tm.now() > self.exercise_range.end as f64 { //self.mode == GameMode::Exercise && 
+                        if self.mode == GameMode::Exercise && tm.now() > self.exercise_range.end as f64 && self.exercise_range.end < res.track_length {
                             tm.seek_to(self.exercise_range.start as f64);
                             self.music.seek_to(self.exercise_range.start)?;
                             pos = self.exercise_range.start;
@@ -768,115 +775,113 @@ impl GameScene {
                     _ => {}
                 }
             }
-            { //if self.mode == GameMode::Exercise
+            if self.mode == GameMode::Exercise {
                 let asp = self.touch_scale();
                 for touch in ui.ensure_touches() {
                     touch.position *= asp;
                 }
-                if self.mode == GameMode::Exercise {
-                    ui.scope(|ui| {
-                        ui.dx(0.3);
-                        ui.dy(-0.3);
-                        ui.slider(tl!("speed"), 0.5..2.0, 0.05, &mut self.res.config.speed, Some(0.5));
-                    });
-                    ui.dy(0.06);
-                    let hw = 0.7;
-                    let h = 0.06;
-                    let eh = 0.12;
-                    let rad = 0.03;
-                    let sp = self.offset().min(0.);
-                    ui.fill_rect(Rect::new(-hw, -h, hw * 2., h * 2.), Color::new(0.4, 0.4, 0.4, 1.));
-                    let st = -hw + (self.exercise_range.start - sp) / (self.res.track_length - sp) * hw * 2.;
-                    let en = -hw + (self.exercise_range.end - sp) / (self.res.track_length - sp) * hw * 2.;
-                    let t = tm.now() as f32;
-                    let cur = -hw + (t - sp) / (self.res.track_length - sp) * hw * 2.;
-                    ui.fill_rect(Rect::new(st, -h, en - st, h * 2.), Color::new(0.6, 0.6, 0.6, 1.));
-                    ui.fill_rect(Rect::new(st, -eh, 0., eh + h).feather(0.005), Color::new(0.66, 0.78, 0.98, 1.));
-                    ui.fill_circle(st, -eh, rad, Color::new(0.66, 0.78, 0.98, 1.));
-                    if self.exercise_press.is_none() {
-                        let r = ui.rect_to_global(Rect::new(st, -eh, 0., 0.).feather(rad));
-                        self.exercise_press = Judge::get_touches(1.0)
-                            .iter()
-                            .find(|it| it.phase == TouchPhase::Started && r.contains(it.position))
-                            .map(|it| (-1, it.id));
-                    }
-                    ui.fill_rect(Rect::new(en, -h, 0., eh + h).feather(0.005), Color::new(1., 0.34, 0.54, 1.));
-                    ui.fill_circle(en, eh, rad, Color::new(1., 0.34, 0.54, 1.));
-                    if self.exercise_press.is_none() {
-                        let r = ui.rect_to_global(Rect::new(en, eh, 0., 0.).feather(rad));
-                        self.exercise_press = Judge::get_touches(1.0)
-                            .iter()
-                            .find(|it| it.phase == TouchPhase::Started && r.contains(it.position))
-                            .map(|it| (1, it.id));
-                    }
-                    ui.fill_rect(Rect::new(cur, -h, 0., h * 2.).feather(0.005), Color::new(0.9, 0.9, 0.9, 1.));
-                    ui.fill_circle(cur, 0., rad, Color::new(0.95, 0.95, 0.95, 1.));
-                    if self.exercise_press.is_none() {
-                        let r = ui.rect_to_global(Rect::new(cur, 0., 0., 0.).feather(rad));
-                        self.exercise_press = Judge::get_touches(1.0)
-                            .iter()
-                            .find(|it| it.phase == TouchPhase::Started && r.contains(it.position))
-                            .map(|it| (0, it.id));
-                    }
-                    ui.text(fmt_time(t)).pos(0., -0.23).anchor(0.5, 0.).size(0.8).draw();
-                    if let Some((ctrl, id)) = &self.exercise_press {
-                        if let Some(touch) = Judge::get_touches(1.0).iter().rfind(|it| it.id == *id) {
-                            let x = touch.position.x;
-                            let p = (x + hw) / (hw * 2.) * (self.res.track_length - sp) + sp;
-                            let p = if self.res.track_length - sp <= 3. || *ctrl == 0 {
-                                p.clamp(sp, self.res.track_length)
-                            } else {
-                                p.clamp(
-                                    if *ctrl == -1 { sp } else { self.exercise_range.start + 3. },
-                                    if *ctrl == -1 {
-                                        self.exercise_range.end - 3.
-                                    } else {
-                                        self.res.track_length
-                                    },
-                                )
-                            };
-                            if *ctrl == 0 {
-                                tm.seek_to(p as f64);
-                                self.music.seek_to(p)?;
-                            } else {
-                                *(if *ctrl == -1 {
-                                    &mut self.exercise_range.start
+                ui.scope(|ui| {
+                    ui.dx(0.3);
+                    ui.dy(-0.3);
+                    ui.slider(tl!("speed"), 0.1..2.0, 0.05, &mut self.res.config.speed, Some(0.5));
+                });
+                ui.dy(0.06);
+                let hw = 0.7;
+                let h = 0.06;
+                let eh = 0.12;
+                let rad = 0.03;
+                let sp = self.offset().min(0.);
+                ui.fill_rect(Rect::new(-hw, -h, hw * 2., h * 2.), Color::new(0.4, 0.4, 0.4, 1.));
+                let st = -hw + (self.exercise_range.start - sp) / (self.res.track_length - sp) * hw * 2.;
+                let en = -hw + (self.exercise_range.end - sp) / (self.res.track_length - sp) * hw * 2.;
+                let t = tm.now() as f32;
+                let cur = -hw + (t - sp) / (self.res.track_length - sp) * hw * 2.;
+                ui.fill_rect(Rect::new(st, -h, en - st, h * 2.), Color::new(0.6, 0.6, 0.6, 1.));
+                ui.fill_rect(Rect::new(st, -eh, 0., eh + h).feather(0.005), Color::new(0.66, 0.78, 0.98, 1.));
+                ui.fill_circle(st, -eh, rad, Color::new(0.66, 0.78, 0.98, 1.));
+                if self.exercise_press.is_none() {
+                    let r = ui.rect_to_global(Rect::new(st, -eh, 0., 0.).feather(rad));
+                    self.exercise_press = Judge::get_touches(1.0)
+                        .iter()
+                        .find(|it| it.phase == TouchPhase::Started && r.contains(it.position))
+                        .map(|it| (-1, it.id));
+                }
+                ui.fill_rect(Rect::new(en, -h, 0., eh + h).feather(0.005), Color::new(1., 0.34, 0.54, 1.));
+                ui.fill_circle(en, eh, rad, Color::new(1., 0.34, 0.54, 1.));
+                if self.exercise_press.is_none() {
+                    let r = ui.rect_to_global(Rect::new(en, eh, 0., 0.).feather(rad));
+                    self.exercise_press = Judge::get_touches(1.0)
+                        .iter()
+                        .find(|it| it.phase == TouchPhase::Started && r.contains(it.position))
+                        .map(|it| (1, it.id));
+                }
+                ui.fill_rect(Rect::new(cur, -h, 0., h * 2.).feather(0.005), Color::new(0.9, 0.9, 0.9, 1.));
+                ui.fill_circle(cur, 0., rad, Color::new(0.95, 0.95, 0.95, 1.));
+                if self.exercise_press.is_none() {
+                    let r = ui.rect_to_global(Rect::new(cur, 0., 0., 0.).feather(rad));
+                    self.exercise_press = Judge::get_touches(1.0)
+                        .iter()
+                        .find(|it| it.phase == TouchPhase::Started && r.contains(it.position))
+                        .map(|it| (0, it.id));
+                }
+                ui.text(fmt_time(t)).pos(0., -0.23).anchor(0.5, 0.).size(0.8).draw();
+                if let Some((ctrl, id)) = &self.exercise_press {
+                    if let Some(touch) = Judge::get_touches(1.0).iter().rfind(|it| it.id == *id) {
+                        let x = touch.position.x;
+                        let p = (x + hw) / (hw * 2.) * (self.res.track_length - sp) + sp;
+                        let p = if self.res.track_length - sp <= 3. || *ctrl == 0 {
+                            p.clamp(sp, self.res.track_length)
+                        } else {
+                            p.clamp(
+                                if *ctrl == -1 { sp } else { self.exercise_range.start + 3. },
+                                if *ctrl == -1 {
+                                    self.exercise_range.end - 3.
                                 } else {
-                                    &mut self.exercise_range.end
-                                }) = p;
-                            }
-                            if matches!(touch.phase, TouchPhase::Cancelled | TouchPhase::Ended) {
-                                self.exercise_press = None;
-                            }
+                                    self.res.track_length
+                                },
+                            )
+                        };
+                        if *ctrl == 0 {
+                            tm.seek_to(p as f64);
+                            self.music.seek_to(p)?;
+                        } else {
+                            *(if *ctrl == -1 {
+                                &mut self.exercise_range.start
+                            } else {
+                                &mut self.exercise_range.end
+                            }) = p;
+                        }
+                        if matches!(touch.phase, TouchPhase::Cancelled | TouchPhase::Ended) {
+                            self.exercise_press = None;
                         }
                     }
-                    ui.dy(0.2);
-                    let r = ui.text(tl!("to")).size(0.8).anchor(0.5, 0.).draw();
-                    let mut tx = ui
-                        .text(fmt_time(self.exercise_range.start))
-                        .pos(r.x - 0.02, 0.)
-                        .anchor(1., 0.)
-                        .size(0.8)
-                        .color(BLACK);
-                    let re = tx.measure();
-                    self.exercise_btns.0.set(tx.ui, re);
-                    tx.ui
-                        .fill_rect(re.feather(0.01), Color::new(1., 1., 1., if self.exercise_btns.0.touching() { 0.5 } else { 1. }));
-                    tx.draw();
+                }
+                ui.dy(0.2);
+                let r = ui.text(tl!("to")).size(0.8).anchor(0.5, 0.).draw();
+                let mut tx = ui
+                    .text(fmt_time(self.exercise_range.start))
+                    .pos(r.x - 0.02, 0.)
+                    .anchor(1., 0.)
+                    .size(0.8)
+                    .color(BLACK);
+                let re = tx.measure();
+                self.exercise_btns.0.set(tx.ui, re);
+                tx.ui
+                    .fill_rect(re.feather(0.01), Color::new(1., 1., 1., if self.exercise_btns.0.touching() { 0.5 } else { 1. }));
+                tx.draw();
 
-                    let mut tx = ui
-                        .text(fmt_time(self.exercise_range.end))
-                        .pos(r.right() + 0.02, 0.)
-                        .size(0.8)
-                        .color(BLACK);
-                    let re = tx.measure();
-                    self.exercise_btns.1.set(tx.ui, re);
-                    tx.ui
-                        .fill_rect(re.feather(0.01), Color::new(1., 1., 1., if self.exercise_btns.1.touching() { 0.5 } else { 1. }));
-                    tx.draw();
-                    for touch in ui.ensure_touches() {
-                        touch.position /= asp;
-                    }
+                let mut tx = ui
+                    .text(fmt_time(self.exercise_range.end))
+                    .pos(r.right() + 0.02, 0.)
+                    .size(0.8)
+                    .color(BLACK);
+                let re = tx.measure();
+                self.exercise_btns.1.set(tx.ui, re);
+                tx.ui
+                    .fill_rect(re.feather(0.01), Color::new(1., 1., 1., if self.exercise_btns.1.touching() { 0.5 } else { 1. }));
+                tx.draw();
+                for touch in ui.ensure_touches() {
+                    touch.position /= asp;
                 }
             }
         }
@@ -945,12 +950,12 @@ impl GameScene {
             if ui.button("lg_add", Rect::new(width - d, r.center().y, 0., 0.).feather(0.026), "+") && ita {
                 self.info_offset += beat;
             }
-            let d = 0.08;
+            let d = 0.080;
             if ui.button("sm_sub", Rect::new(d, r.center().y, 0., 0.).feather(0.022), "-") && ita {
-                self.info_offset -= 0.01;
+                self.info_offset -= 0.010;
             }
             if ui.button("sm_add", Rect::new(width - d, r.center().y, 0., 0.).feather(0.022), "+") && ita {
-                self.info_offset += 0.01;
+                self.info_offset += 0.010;
             }
             let d = 0.03;
             if ui.button("ti_sub", Rect::new(d, r.center().y, 0., 0.).feather(0.017), "-") && ita {
@@ -980,22 +985,8 @@ impl GameScene {
             ui.dx(1. - width * 0.97);
             ui.dy(ui.top - height * 0.75);
             ui.slider(tl!("speed"), 0.1..2.0, 0.05, &mut self.res.config.speed, Some(0.36));
-            if (tm.speed - self.res.config.speed as f64).abs() > 0.01 {
-                debug!("recreate music");
-                self.music = self.res.audio.create_music(
-                    self.res.music.clone(),
-                    MusicParams {
-                        amplifier: self.res.config.volume_music as _,
-                        playback_rate: self.res.config.speed as _,
-                        ..Default::default()
-                    },
-                ).expect("failed to create music");
-                tm.pause();
-                self.music.pause();
-                let now = tm.now();
-                tm.speed = self.res.config.speed as _;
-                tm.seek_to(now);
-                self.music.seek_to(now as f32);
+            if (tm.speed - self.res.config.speed as f64).abs() > 1e-3 {
+                reset_music_speed!(self, self.res, tm);
                 tm.resume();
                 self.music.play();
             }
@@ -1042,7 +1033,7 @@ impl Scene for GameScene {
         if matches!(self.state, State::Playing) {
             tm.update(self.music.position() as f64);
         }
-        if self.mode == GameMode::Exercise && tm.now() > self.exercise_range.end as f64 && !tm.paused() {
+        if self.mode == GameMode::Exercise && tm.now() > self.exercise_range.end as f64 && self.exercise_range.end < self.res.track_length && !tm.paused() {
             let state = self.state.clone();
             reset!(self, self.res, tm);
             self.state = state;
@@ -1176,6 +1167,9 @@ impl Scene for GameScene {
         if res.config.interactive && is_key_pressed(KeyCode::Space) {
             if tm.paused() {
                 if matches!(self.state, State::Playing) {
+                    if (tm.speed - res.config.speed as f64).abs() > 1e-3 {
+                        reset_music_speed!(self, res, tm);
+                    }
                     self.music.play()?;
                     tm.resume();
                     self.pause_rewind = PauseRewind {
