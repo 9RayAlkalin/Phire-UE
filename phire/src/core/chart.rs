@@ -113,10 +113,6 @@ impl Chart {
         for line in &mut self.lines {
             line.cache.reset(&mut line.notes);
         }
-        for video in &mut self.extra.videos {
-            video.next_frame = 0;
-            video.ended = false;
-        }
     }
 
     pub fn update(&mut self, res: &mut Resource) {
