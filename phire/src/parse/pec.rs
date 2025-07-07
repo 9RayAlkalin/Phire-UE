@@ -275,7 +275,7 @@ pub fn parse_pec(source: &str, extra: ChartExtra) -> Result<Chart> {
                         multiple_hint: false,
                         fake,
                         judge: JudgeStatus::NotJudged,
-                        attr: false,
+                        protected: false,
                     });
                     if it.next() == Some("#") {
                         last_note!().speed = it.take_f32()?;

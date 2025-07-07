@@ -108,7 +108,7 @@ impl Chart {
             .flat_map(|it| it.notes.iter_mut())
             .for_each(|note| {
                 note.judge = JudgeStatus::NotJudged;
-                note.attr = false;
+                note.protected = false;
             });
         for line in &mut self.lines {
             line.cache.reset(&mut line.notes);

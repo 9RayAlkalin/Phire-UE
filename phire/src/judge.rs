@@ -11,6 +11,7 @@ use miniquad::{EventHandler, MouseButton};
 use once_cell::sync::Lazy;
 use sasa::{PlaySfxParams, Sfx};
 use serde::Serialize;
+use tracing::debug;
 use std::{cell::RefCell, collections::HashMap, num::FpCategory};
 
 pub const FLICK_SPEED_THRESHOLD: f32 = 0.8;
@@ -560,37 +561,40 @@ impl Judge {
                     }
                 }
             }
-            if let (Some((line_id, id)), dist, dt, _, posx) = closest {
-                let drag_or_flick = |note: &mut Note| {
+            if let (Some((line_id, id)), _, dt, _, posx) = closest {
+                let can_protect_note = |note: &mut Note| {
                     let x = &mut note.object.translation.0;
                     x.set_time(t);
-                    let dist2 = (x.now() - posx).abs();
-                    let dist = (dist2 - dist).abs();
                     let judge_time = t - note.time;
                     matches!(note.kind, NoteKind::Drag | NoteKind::Flick)
-                        && dist <= x_diff_max
-                        && !note.fake
-                        && !note.attr
                         && judge_time >= -LIMIT_GOOD
                         && judge_time <= LIMIT_BAD
+                        && (x.now() - posx).abs() <= x_diff_max // note_dist <= x_diff_max
+                        && !note.protected
+                        && !note.fake
                 };
-                let line = &mut chart.lines[line_id];
-                if matches!(line.notes[id as usize].kind, NoteKind::Drag) {
-                    //debug!("reject by drag");
+                let lines = &mut chart.lines;
+                if matches!(lines[line_id].notes[id as usize].kind, NoteKind::Drag) {
+                    // debug!("reject by drag");
                     continue;
                 }
                 if click {
-                    if dt > LIMIT_PERFECT && line.notes.iter_mut().any(|note| drag_or_flick(note)) { // flag unattr drag
-                        for note in &mut line.notes {
-                            if drag_or_flick(note) {
-                                note.attr = true;
-                                // debug!("flag drag");
-                            }
+                    if dt > LIMIT_PERFECT {
+                        let mut any = false;
+                        lines.iter_mut()
+                            .flat_map(|line| line.notes.iter_mut())
+                            .for_each(|note| {
+                                if can_protect_note(note) {
+                                    note.protected = true;
+                                    any = true;
+                                }
+                            });
+                        if any {
+                            continue;
                         }
-                        continue;
                     }
                     // click & hold
-                    let note = &mut line.notes[id as usize];
+                    let note = &mut lines[line_id].notes[id as usize];
                     let dt = dt.abs();
                     if matches!(note.kind, NoteKind::Flick) {
                         continue; // to next loop
@@ -612,13 +616,13 @@ impl Judge {
                         // prevent extra judgements
                         if matches!(note.judge, JudgeStatus::NotJudged) {
                             // keep the note after bad judgement
-                            line.notes[id as usize].judge = JudgeStatus::PreJudge;
+                            note.judge = JudgeStatus::PreJudge;
                             judgements.push((Judgement::Bad, line_id, id, None));
                         }
                     }
                 } else {
                     // flick
-                    line.notes[id as usize].judge = JudgeStatus::PreJudge;
+                    lines[line_id].notes[id as usize].judge = JudgeStatus::PreJudge;
                     if let Some(tracker) = self.trackers.get_mut(&touch.id) {
                         tracker.flicked = false;
                     }
