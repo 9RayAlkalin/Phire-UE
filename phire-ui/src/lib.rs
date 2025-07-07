@@ -35,7 +35,7 @@ use std::sync::{mpsc, Mutex};
 use tracing::{error, info};
 
 static MESSAGES_TX: Mutex<Option<mpsc::Sender<bool>>> = Mutex::new(None);
-static MESSAGES_TX_ONLY_PAUSE: Mutex<Option<mpsc::Sender<bool>>> = Mutex::new(None);
+static MESSAGES_TX_FOUCUS_PAUSE: Mutex<Option<mpsc::Sender<bool>>> = Mutex::new(None);
 static AA_TX: Mutex<Option<mpsc::Sender<i32>>> = Mutex::new(None);
 static DATA_PATH: Mutex<Option<String>> = Mutex::new(None);
 static CACHE_DIR: Mutex<Option<String>> = Mutex::new(None);
@@ -168,7 +168,7 @@ async fn the_main() -> Result<()> {
 
     let rx_only_pause = {
         let (tx, rx) = mpsc::channel();
-        *MESSAGES_TX_ONLY_PAUSE.lock().unwrap() = Some(tx);
+        *MESSAGES_TX_FOUCUS_PAUSE.lock().unwrap() = Some(tx);
         rx
     };
 
@@ -325,9 +325,9 @@ pub extern "C" fn Java_quad_1native_QuadNative_prprActivityOnPause(_: *mut std::
 
 #[cfg(target_os = "android")]
 #[no_mangle]
-pub extern "C" fn Java_quad_1native_QuadNative_prprActivityOnlyPause(_: *mut std::ffi::c_void, _: *const std::ffi::c_void) {
+pub extern "C" fn Java_quad_1native_QuadNative_prprActivityFocusPause(_: *mut std::ffi::c_void, _: *const std::ffi::c_void) {
     anti_addiction_action("leaveGame", None);
-    if let Some(tx) = MESSAGES_TX_ONLY_PAUSE.lock().unwrap().as_mut() {
+    if let Some(tx) = MESSAGES_TX_FOUCUS_PAUSE.lock().unwrap().as_mut() {
         let _ = tx.send(true);
     }
 }
@@ -357,9 +357,9 @@ pub extern "C" fn Java_quad_1native_QuadNative_prprActivityOnResume(_: *mut std:
 
 #[cfg(target_os = "android")]
 #[no_mangle]
-pub extern "C" fn Java_quad_1native_QuadNative_prprActivityOnlyResume(_: *mut std::ffi::c_void, _: *const std::ffi::c_void) {
+pub extern "C" fn Java_quad_1native_QuadNative_prprActivityFocusResume(_: *mut std::ffi::c_void, _: *const std::ffi::c_void) {
     anti_addiction_action("leaveGame", None);
-    if let Some(tx) = MESSAGES_TX_ONLY_PAUSE.lock().unwrap().as_mut() {
+    if let Some(tx) = MESSAGES_TX_FOUCUS_PAUSE.lock().unwrap().as_mut() {
         let _ = tx.send(false);
     }
 }
