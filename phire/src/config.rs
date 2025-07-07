@@ -15,6 +15,7 @@ bitflags! {
         const AUTOPLAY = 1;
         const FLIP_X = 2;
         const FADE_OUT = 4;
+        const FULL_SCREEN_JUDGE = 8;
     }
 }
 
@@ -194,5 +195,10 @@ impl Config {
     #[inline]
     pub fn flip_x(&self) -> bool {
         self.has_mod(Mods::FLIP_X)
+    }
+
+    #[inline]
+    pub fn full_scrrn_judge(&self) -> bool {
+        self.has_mod(Mods::FULL_SCREEN_JUDGE)
     }
 }

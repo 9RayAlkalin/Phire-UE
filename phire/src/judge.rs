@@ -359,7 +359,11 @@ impl Judge {
             self.auto_play_update(res, chart);
             return;
         }
-        const X_DIFF_MAX: f32 = 0.21 / (16. / 9.) * 2.;
+        let x_diff_max: f32 = if res.config.full_scrrn_judge() {
+            2. / res.config.chart_ratio
+        } else {
+            0.21 / (16. / 9.) * 2.
+        };
         let spd = res.config.speed;
 
         #[cfg(not(target_os = "windows"))]
@@ -508,7 +512,7 @@ impl Judge {
                 continue;
             }
             let t = time_of(touch);
-            let mut closest = (None, X_DIFF_MAX, LIMIT_BAD, LIMIT_BAD + (X_DIFF_MAX / NOTE_WIDTH_RATIO_BASE - 1.).max(0.) * DIST_FACTOR, 0.);
+            let mut closest = (None, x_diff_max, LIMIT_BAD, LIMIT_BAD + (x_diff_max / NOTE_WIDTH_RATIO_BASE - 1.).max(0.) * DIST_FACTOR, 0.);
             for (line_id, ((line, pos), (idx, st))) in chart.lines.iter_mut().zip(pos.iter()).zip(self.notes.iter_mut()).enumerate() {
                 let Some(pos) = pos[id] else { continue; };
                 for id in &idx[*st..] {
@@ -528,7 +532,7 @@ impl Judge {
                     x.set_time(t);
                     let posx = pos.x;
                     let dist = (x.now() - posx).abs();
-                    if dist > X_DIFF_MAX {
+                    if dist > x_diff_max {
                         continue;
                     }
                     if dt
@@ -545,7 +549,12 @@ impl Judge {
                     } else {
                         dt
                     };
-                    let key = dt + (dist / NOTE_WIDTH_RATIO_BASE - 1.).max(0.) * DIST_FACTOR;
+                    let dist_key = if res.config.full_scrrn_judge() {
+                        (dist / NOTE_WIDTH_RATIO_BASE).max(0.) * 0.02
+                    } else {
+                        (dist / NOTE_WIDTH_RATIO_BASE - 1.).max(0.) * DIST_FACTOR
+                    };
+                    let key = dt + dist_key;
                     if key < closest.3 {
                         closest = (Some((line_id, *id)), dist, dt, key, posx);
                     }
@@ -559,7 +568,7 @@ impl Judge {
                     let dist = (dist2 - dist).abs();
                     let judge_time = t - note.time;
                     matches!(note.kind, NoteKind::Drag | NoteKind::Flick)
-                        && dist <= X_DIFF_MAX
+                        && dist <= x_diff_max
                         && !note.fake
                         && !note.attr
                         && judge_time >= -LIMIT_GOOD
@@ -679,7 +688,7 @@ impl Judge {
                         let x = &mut note.object.translation.0;
                         x.set_time(t);
                         let x = x.now();
-                        if self.key_down_count == 0 && !pos.iter().any(|it| it.map_or(false, |it| (it.x - x).abs() <= X_DIFF_MAX)) {
+                        if self.key_down_count == 0 && !pos.iter().any(|it| it.map_or(false, |it| (it.x - x).abs() <= x_diff_max)) {
                             if t > *up_time + UP_TOLERANCE {
                                 note.judge = JudgeStatus::Judged;
                                 judgements.push((Judgement::Miss, line_id, *id, None));
@@ -716,7 +725,7 @@ impl Judge {
                     || pos.iter().any(|it| {
                         it.map_or(false, |it| {
                             let dx = (it.x - x).abs();
-                            dx <= X_DIFF_MAX && dt <= (LIMIT_BAD - LIMIT_PERFECT * (dx - 0.9).max(0.))
+                            dx <= x_diff_max && dt <= (LIMIT_BAD - LIMIT_PERFECT * (dx - 0.9).max(0.))
                         })
                     })
                 {

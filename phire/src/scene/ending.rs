@@ -331,14 +331,19 @@ impl Scene for EndingScene {
         draw_parallelogram(main, None, c2, true);
         {
             let spd = if (self.speed - 1.).abs() <= 1e-4 {
-                format!(" ")//String::new()
+                format!("")//String::new()
             } else {
-                format!(" {:.2}x", self.speed)
+                format!("{:.2}x", self.speed)
+            };
+            let full_screen_judge = if self.config.full_scrrn_judge() {
+                format!("FULL SCREEN JUDGE")
+            } else {
+                format!("")
             };
             let text = if self.autoplay {
                 format!("{text_autoplay} {spd}")
             } else if !self.rated {
-                format!("{spd}")
+                format!("{full_screen_judge} {spd}")
             } else if let Some(state) = &self.update_state {
                 format!(
                     "{spd}  {}",
