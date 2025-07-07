@@ -755,7 +755,7 @@ impl GameScene {
                         res.config.disable_audio = true;
                     }
                     Some(1) => {
-                        if self.mode == GameMode::Exercise && tm.now() > self.exercise_range.end as f64 && self.exercise_range.end < res.track_length {
+                        if self.mode == GameMode::Exercise && tm.now() > self.exercise_range.end as f64 && self.exercise_range.end - 0.1 < res.track_length {
                             tm.seek_to(self.exercise_range.start as f64);
                             self.music.seek_to(self.exercise_range.start)?;
                             pos = self.exercise_range.start;
@@ -1046,7 +1046,7 @@ impl Scene for GameScene {
         if matches!(self.state, State::Playing) {
             tm.update(self.music.position() as f64);
         }
-        if self.mode == GameMode::Exercise && tm.now() > self.exercise_range.end as f64 && self.exercise_range.end < self.res.track_length && !tm.paused() {
+        if self.mode == GameMode::Exercise && tm.now() > self.exercise_range.end as f64 && self.exercise_range.end < self.res.track_length - 0.1 && !tm.paused() {
             let state = self.state.clone();
             reset!(self, self.res, tm);
             self.state = state;
@@ -1114,7 +1114,7 @@ impl Scene for GameScene {
                         })
                     };
                     self.next_scene = match self.mode {
-                        GameMode::Normal | GameMode::NoRetry | GameMode::View => Some(NextScene::Overlay(Box::new(EndingScene::new(
+                        GameMode::Normal | GameMode::Exercise | GameMode::NoRetry | GameMode::View => Some(NextScene::Overlay(Box::new(EndingScene::new(
                             self.res.background.clone(),
                             self.res.illustration.clone(),
                             self.res.player.clone(),
@@ -1132,7 +1132,6 @@ impl Scene for GameScene {
                             record,
                         )?))),
                         GameMode::TweakOffset => Some(NextScene::PopWithResult(Box::new(None::<f32>))),
-                        GameMode::Exercise => None,
                     };
                 }
                 self.res.alpha = 1. - (t / AFTER_TIME).clamp(0., 1.).powi(2);
