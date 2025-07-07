@@ -38,7 +38,7 @@ pub struct EndingScene {
     target: Option<RenderTarget>,
     audio: AudioManager,
     bgm: Music,
-    bpm_already_played: bool,
+    bgm_already_played: bool,
 
     info: ChartInfo,
     result: PlayResult,
@@ -103,7 +103,7 @@ impl EndingScene {
             target: None,
             audio,
             bgm,
-            bpm_already_played: false,
+            bgm_already_played: false,
             update_state: if upload_task.is_some() {
                 None
             } else {
@@ -184,9 +184,9 @@ impl Scene for EndingScene {
 
     fn update(&mut self, tm: &mut TimeManager) -> Result<()> {
         self.audio.recover_if_needed()?;
-        if !self.bpm_already_played && tm.now() >= EndingScene::BPM_WAIT_TIME - self.config.offset as f64 && self.target.is_none() && self.bgm.paused() {
+        if !self.bgm_already_played && tm.now() >= EndingScene::BPM_WAIT_TIME - self.config.offset as f64 && self.target.is_none() && self.bgm.paused() {
             self.bgm.play()?;
-            self.bpm_already_played = true;
+            self.bgm_already_played = true;
         }
         if RE_UPLOAD.with(|it| std::mem::replace(it.borrow_mut().deref_mut(), false)) && self.upload_task.is_none() {
             self.upload_task = self
