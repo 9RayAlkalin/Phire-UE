@@ -656,11 +656,51 @@ pub fn push_frame_time(frame_times: &mut VecDeque<f64>, real_time: f64) {
     }
 }
 
+pub fn get_gyro(gyro_record: &VecDeque<(f32, f32, f32)>) -> Vec2 {
+    let len = gyro_record.len() as f32;
+    let (sum_y, sum_z) = gyro_record.iter().fold((0.0, 0.0), |(acc_x, acc_y), &(_, x, y)| {
+        (acc_x + x, acc_y + y)
+    });
+    Vec2::new(sum_y / len, sum_z / len)
+}
+
+pub fn push_gyro(gyro_record: &mut VecDeque<(f32, f32, f32)>, real_time: f32, x: f32, y: f32) {
+    gyro_record.push_back((real_time, x, y));
+    while gyro_record.front().is_some_and(|it| real_time - it.0 > 0.1) {
+        gyro_record.pop_front();
+    }
+}
+
 pub fn round_to_step(value: f32, step: f32) -> f32 {
     let aligned = (value / step).round() * step;
     let digits = (-step.log10()).ceil() as i32;
     let factor = 10_f32.powi(digits);
     (aligned * factor).round() / factor
+}
+
+pub fn blur_image(image: DynamicImage, blur: f32) -> Result<SafeTexture> {
+    let (w, h) = (image.width(), image.height());
+    let size = w as usize * h as usize;
+    let mut blurred_rgb = image.to_rgb8();
+    let mut vec = unsafe { Vec::from_raw_parts(std::mem::transmute(blurred_rgb.as_mut_ptr()), size, size) };
+    fastblur::gaussian_blur(&mut vec, w as _, h as _, blur);
+    std::mem::forget(vec);
+    let mut blurred = Vec::with_capacity(size * 4);
+    for input in blurred_rgb.chunks_exact(3) {
+        //blurred.extend_from_slice(input);
+        blurred.push(input[0]);
+        blurred.push(input[1]);
+        blurred.push(input[2]);
+        blurred.push(255);
+    }
+    Ok((
+        Texture2D::from_image(&Image {
+            width: w as _,
+            height: h as _,
+            bytes: blurred,
+        })
+    ).into())
+
 }
 
 

@@ -40,6 +40,7 @@ static AA_TX: Mutex<Option<mpsc::Sender<i32>>> = Mutex::new(None);
 static DATA_PATH: Mutex<Option<String>> = Mutex::new(None);
 static CACHE_DIR: Mutex<Option<String>> = Mutex::new(None);
 pub static mut DATA: Option<Data> = None;
+pub static GYRO: Mutex<Vec3> = Mutex::new(Vec3::new(0.0, 0.0, 0.0));
 
 #[cfg(feature = "closed")]
 pub async fn load_res(name: &str) -> Vec<u8> {
@@ -461,5 +462,22 @@ pub unsafe extern "C" fn Java_quad_1native_QuadNative_antiAddictionCallback(
         if let Some(tx) = AA_TX.lock().unwrap().as_mut() {
             let _ = tx.send(code);
         }
+    }
+}
+
+#[cfg(target_os = "android")]
+#[no_mangle]
+pub unsafe extern "C" fn Java_quad_1native_QuadNative_updateGyro(
+    env: ndk_sys::JNIEnv,
+    _class: ndk_sys::jclass,
+    x: ndk_sys::jfloat,
+    y: ndk_sys::jfloat,
+    z: ndk_sys::jfloat,
+) {
+    info!("x = {:+.7}, y = {:+.7}, z = {:+.7}", x, y, z);
+    if let mut gyro = GYRO.lock().unwrap() {
+        gyro.x = x as f32;
+        gyro.y = y as f32;
+        gyro.z = z as f32;
     }
 }
