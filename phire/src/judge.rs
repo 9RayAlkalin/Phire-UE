@@ -525,7 +525,7 @@ impl Judge {
                         continue;
                     }
                     let dt = (note.time - t) / spd;
-                    if dt >= closest.3 {
+                    if dt.abs() >= closest.3.abs() {
                         break;
                     }
                     // let dt = if dt < 0. { (dt + EARLY_OFFSET).min(0.).abs() } else { dt };
@@ -536,7 +536,7 @@ impl Judge {
                     if dist > x_diff_max {
                         continue;
                     }
-                    if dt
+                    if dt.abs()
                         > if matches!(note.kind, NoteKind::Click) {
                             LIMIT_BAD // LIMIT_BAD - LIMIT_PERFECT * (dist - 0.9).max(0.)
                         } else {
@@ -545,17 +545,16 @@ impl Judge {
                     {
                         continue;
                     }
-                    let dt = if matches!(note.kind, NoteKind::Flick | NoteKind::Drag) {
-                        dt.abs().max(LIMIT_GOOD)
-                    } else {
-                        dt
-                    };
                     let dist_key = if res.config.full_scrrn_judge() {
                         (dist / NOTE_WIDTH_RATIO_BASE).max(0.) * 0.02
                     } else {
                         (dist / NOTE_WIDTH_RATIO_BASE - 1.).max(0.) * DIST_FACTOR
                     };
-                    let key = dt + dist_key;
+                    let key = if matches!(note.kind, NoteKind::Flick | NoteKind::Drag) {
+                        dt.abs().max(LIMIT_GOOD) + dist_key
+                    } else {
+                        dt.abs() + dist_key
+                    };
                     if key < closest.3 {
                         closest = (Some((line_id, *id)), dist, dt, key, posx);
                     }
