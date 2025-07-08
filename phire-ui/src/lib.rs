@@ -474,7 +474,6 @@ pub unsafe extern "C" fn Java_quad_1native_QuadNative_updateGyro(
     y: ndk_sys::jfloat,
     z: ndk_sys::jfloat,
 ) {
-    info!("x = {:+.7}, y = {:+.7}, z = {:+.7}", x, y, z);
     if let mut gyro = GYRO.lock().unwrap() {
         gyro.x = x as f32;
         gyro.y = y as f32;
