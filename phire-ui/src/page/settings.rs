@@ -175,6 +175,7 @@ impl Page for SettingsPage {
         s.fader.render(ui, t, |ui, c| {
             let path = r.rounded(0.00);
             ui.fill_path(&path, semi_black(0.4 * c.a));
+            let r = r.feather(-0.01);
             self.scroll.size((r.w, r.h));
             ui.scope(|ui| {
                 ui.dx(r.x);
