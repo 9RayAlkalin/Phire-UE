@@ -28,12 +28,12 @@ fn default_duration() -> f32 {
 }
 
 #[inline]
-fn default_perfect() -> u32 {
+fn default_perfect_fx() -> u32 {
     0xffffeca0
 }
 
 #[inline]
-fn default_good() -> u32 {
+fn default_good_fx() -> u32 {
     0xffb4e1ff
 }
 
@@ -82,10 +82,10 @@ pub struct ResPackInfo {
     #[serde(default)]
     pub hold_compact: bool,
 
-    #[serde(default = "default_perfect")]
-    pub color_perfect: u32,
-    #[serde(default = "default_good")]
-    pub color_good: u32,
+    #[serde(default = "default_perfect_fx")]
+    pub color_perfect_fx: u32,
+    #[serde(default = "default_good_fx")]
+    pub color_good_fx: u32,
 
     #[serde(default = "default_perfect_line")]
     pub color_perfect_line: u32,
@@ -99,7 +99,7 @@ pub struct ResPackInfo {
 impl ResPackInfo {
     pub fn fx_perfect(&self) -> Color {
         if self.hit_fx_tinted {
-            Color::from_hex(self.color_perfect)
+            Color::from_hex(self.color_perfect_fx)
         } else {
             WHITE
         }
@@ -107,26 +107,18 @@ impl ResPackInfo {
 
     pub fn fx_good(&self) -> Color {
         if self.hit_fx_tinted {
-            Color::from_hex(self.color_good)
+            Color::from_hex(self.color_good_fx)
         } else {
             WHITE
         }
     }
 
-    pub fn fx_perfect_line(&self) -> Color {
-        if self.hit_fx_tinted {
-            Color::from_hex(self.color_perfect_line)
-        } else {
-            WHITE
-        }
+    pub fn line_perfect(&self) -> Color {
+        Color::from_hex(self.color_perfect_line)
     }
 
-    pub fn fx_good_line(&self) -> Color {
-        if self.hit_fx_tinted {
-            Color::from_hex(self.color_good_line)
-        } else {
-            WHITE
-        }
+    pub fn line_good(&self) -> Color {
+        Color::from_hex(self.color_good_line)
     }
 }
 
@@ -524,7 +516,7 @@ impl Resource {
             time: 0.,
 
             alpha: 1.,
-            judge_line_color: res_pack.info.fx_perfect_line(),
+            judge_line_color: res_pack.info.line_perfect(),
 
             camera,
 

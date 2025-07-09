@@ -40,7 +40,7 @@ use phire::{
     ui::{FontArc, IntoShading, Shading, TextPainter, Ui},
 };
 use std::{
-    any::Any, borrow::Cow, collections::VecDeque, ops::DerefMut, path::PathBuf, sync::{Arc, Mutex}
+    any::Any, borrow::Cow, ops::DerefMut, path::PathBuf, sync::{Arc, Mutex}
 };
 use tracing::warn;
 
@@ -343,20 +343,18 @@ pub struct SharedState {
 
     pub icons: [SafeTexture; 8],
 
-    pub gryo_record: VecDeque<(f32, f32, f32)>, // (time, x, y)
     pub gyro_offset: Vec2,
 }
 
 pub const RESTORE_RATE: f32 = 0.005;
-pub const ROT_SCALE_X: f32 = 0.003;
-pub const ROT_SCALE_Y: f32 = 0.003;
-pub const MAX_ROTATE_RATE: f32 = 0.4;
+pub const ROT_SCALE_X: f32 = -0.004;
+pub const ROT_SCALE_Y: f32 = 0.004;
+pub const MAX_ROTATE_RATE: f32 = 0.7;
 
 impl SharedState {
     pub async fn new() -> Result<Self> {
         let font = FontArc::try_from_vec(load_file("halva.ttf").await?)?;
         let painter = TextPainter::new(font);
-        let gryo_record: VecDeque<(f32, f32, f32)> = VecDeque::new();
         Ok(Self {
             t: 0.,
             rt: 0.,
@@ -365,7 +363,6 @@ impl SharedState {
             charts_local: Vec::new(),
 
             icons: Resource::load_icons().await?,
-            gryo_record,
             gyro_offset: Vec2::ZERO,
         })
     }

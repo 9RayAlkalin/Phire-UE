@@ -273,7 +273,7 @@ impl Page for HomePage {
         let offset = s.gyro_offset;
 
         s.render_fader(ui, |ui, c| {
-            let r = Rect::new(offset.x * 0.4 - 1.0, offset.y * 0.4 - ui.top + 0.0, 1.6, 1.7);
+            let r = Rect::new(offset.x * 0.4 - 0.9, offset.y * 0.4 - ui.top + 0.1, 1.4, 1.65);
             ui.fill_rect(r, (*self.character, r, ScaleType::CropCenter, c));
         });
 
@@ -328,7 +328,7 @@ impl Page for HomePage {
         };
 
         let r = s.render_fader(ui, |ui, c| {
-            let r = Rect::new(offset.x * 0.7 + 0.60, offset.y * 0.7 - 0.30, 0.3, 0.2);
+            let r = Rect::new(offset.x * 0.6 + 0.70, offset.y * 0.6 - 0.30, 1.3, 0.2);
             text_and_icon(ui, r, &mut self.btn_play, tl!("play"), *self.icons.play, c);
             r
         });
@@ -340,7 +340,7 @@ impl Page for HomePage {
         // });
 
         let r = s.render_fader(ui, |ui, c| {
-            let r = Rect::new(r.left(), r.bottom() + 0.02, 0.3, 0.2);
+            let r = Rect::new(r.left(), r.bottom() + 0.02, 1.3, 0.2);
             text_and_icon(ui, r, &mut self.btn_respack, tl!("respack"), *self.icons.respack, c);
             r
         });
@@ -355,7 +355,7 @@ impl Page for HomePage {
             //     ui.fill_circle(r.right() - pad, r.y + pad, 0.01, Color { a: c.a, ..RED });
             // }
 
-            let r = Rect::new(r.left(), r.bottom() + 0.02, 0.3, 0.2);
+            let r = Rect::new(r.left(), r.bottom() + 0.02, 1.3, 0.2);
             // let (r, _) = self.btn_settings.render_shadow(ui, r, t, c.a, |_| semi_black(0.4 * c.a));
             // let r = r.feather(0.004);
             // ui.fill_rect(r, (*self.icons.settings, r, ScaleType::Fit, c));

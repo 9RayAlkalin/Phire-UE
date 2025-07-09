@@ -656,21 +656,6 @@ pub fn push_frame_time(frame_times: &mut VecDeque<f64>, real_time: f64) {
     }
 }
 
-pub fn get_gyro(gyro_record: &VecDeque<(f32, f32, f32)>) -> Vec2 {
-    let len = gyro_record.len() as f32;
-    let (sum_y, sum_z) = gyro_record.iter().fold((0.0, 0.0), |(acc_x, acc_y), &(_, x, y)| {
-        (acc_x + x, acc_y + y)
-    });
-    Vec2::new(sum_y / len, sum_z / len)
-}
-
-pub fn push_gyro(gyro_record: &mut VecDeque<(f32, f32, f32)>, real_time: f32, x: f32, y: f32) {
-    gyro_record.push_back((real_time, x, y));
-    while gyro_record.front().is_some_and(|it| real_time - it.0 > 0.1) {
-        gyro_record.pop_front();
-    }
-}
-
 pub fn round_to_step(value: f32, step: f32) -> f32 {
     let aligned = (value / step).round() * step;
     let digits = (-step.log10()).ceil() as i32;

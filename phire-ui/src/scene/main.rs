@@ -12,7 +12,7 @@ use anyhow::{anyhow, Context, Result};
 use macroquad::prelude::*;
 use phire::{
     core::ResPackInfo,
-    ext::{blur_image, get_gyro, push_gyro, unzip_into, RectExt, SafeTexture, ScaleType},
+    ext::{blur_image, unzip_into, RectExt, SafeTexture, ScaleType},
     scene::{return_file, show_error, show_message, take_file, NextScene, Scene},
     task::Task,
     time::TimeManager,
@@ -20,7 +20,7 @@ use phire::{
 };
 use sasa::{AudioClip, Music};
 use std::{
-    any::Any, cell::RefCell, collections::VecDeque, fs::File, io::BufReader, sync::atomic::{AtomicBool, Ordering}, thread_local, time::{Duration, Instant}
+    any::Any, cell::RefCell, fs::File, io::BufReader, sync::atomic::{AtomicBool, Ordering}, thread_local, time::{Duration, Instant}
 };
 use uuid::Uuid;
 
@@ -376,9 +376,9 @@ impl Scene for MainScene {
         let s = &mut self.state;
         s.update(tm);
         let gyro = GYRO.lock().unwrap();
-        push_gyro(&mut s.gryo_record, s.t, gyro.x, -gyro.y);
+        let rate = gyro.clone();
+        let rate = mouse_position_local();
         drop(gyro);
-        let rate = get_gyro(&s.gryo_record);
 
         let rx = rate.x.clamp(-MAX_ROTATE_RATE, MAX_ROTATE_RATE);
         let ry = rate.y.clamp(-MAX_ROTATE_RATE, MAX_ROTATE_RATE);
@@ -393,16 +393,15 @@ impl Scene for MainScene {
         r.y -= (s.gyro_offset.y + MAX_ROTATE_RATE / 2.) * 0.5;
         r.w += MAX_ROTATE_RATE * 0.5;
         r.h += MAX_ROTATE_RATE * 0.5;
+
         ui.fill_rect(r, (*self.background, r));
-        if self.pages.len() >= 2 {
-            let a = match self.pages.len() {
-                1 => 1.,
-                2 => 1. - s.fader.for_sub(|f| f.progress(s.t)),
-                _ => 0.,
-            };
-            let c = Color::new(1., 1., 1., a);
-            ui.fill_rect(r, (*self.background_blur, r, ScaleType::CropCenter, c));
-        }
+        let alpha = match self.pages.len() {
+            1 => 0.,
+            2 => 1. - s.fader.for_sub(|f| f.progress(s.t)),
+            _ => 1.,
+        };
+        let c = Color::new(1., 1., 1., alpha);
+        ui.fill_rect(r, (*self.background_blur, r, ScaleType::CropCenter, c));
 
         // 1. title
         if s.fader.transiting() {
