@@ -29,7 +29,7 @@ pub struct OffsetPage {
     slider: Slider,
 
     touched: bool,
-    touch: Option<(f32, f32, f32)>,
+    touch: Option<(f32, f32)>,
 
     frame_times: VecDeque<f64>, // frame interval time
     latency_record: VecDeque<f32>,
@@ -200,10 +200,9 @@ impl Page for OffsetPage {
             if t >= 2. {
                 t -= 2.;
             }
-            let ny = (t - 1.) * 0.9;
+            let latency = t - 1.;
             if self.touched {
-                let latency = t - 1.;
-                self.touch = Some((latency, ot, ny));
+                self.touch = Some((latency, ot));
                 if latency.abs() < 0.200 {
                     self.latency_record.push_back(latency);
                     if self.latency_record.len() > 10 {
@@ -219,7 +218,7 @@ impl Page for OffsetPage {
             // if t <= 1. {
             //     let w = NOTE_WIDTH_RATIO_BASE * config.note_scale * 2.;
             //     let h = w * self.click.height() / self.click.width();
-            //     let r = Rect::new(0.0 - w / 2., ny - h / 2., w, h);
+            //     let r = Rect::new(0.0 - w / 2., late - h / 2., w, h);
             //     ui.fill_rect(r, (*self.click, r, ScaleType::Fit, c));
             //     self.cali_last = true;
             // } else {
@@ -230,7 +229,7 @@ impl Page for OffsetPage {
             //     self.cali_last = false;
             // }
 
-            if let Some((latency, time, pos)) = &self.touch {
+            if let Some((latency, time)) = self.touch {
                 let p = (ot - time) / Self::FADE_TIME;
                 if p > 1. {
                     self.touch = None;
@@ -240,7 +239,10 @@ impl Page for OffsetPage {
                         a: (if p <= 0.5 { 1. } else { (1. - p) * 2. }) * c.a * self.color.a,
                         ..self.color
                     };
-                    ui.fill_rect(Rect::new(pos - hh / 2., ct.y - aspect * 0.4 - hw / 2., hh, hw), c);
+                    if latency.abs() <= 0.500 {
+                        println!("{:+.4} {:+.4}", latency, calculate_pos(latency));
+                        ui.fill_rect(Rect::new(calculate_pos(latency) - hh / 2., ct.y - aspect * 0.4 - hw / 2., hh, hw), c);
+                    }
 
                     ui.text(format!("{} {:.0}ms", tl!("now"), latency * 1000.))
                         .pos(0.0, ct.y + aspect * 0.3)
@@ -271,6 +273,12 @@ impl Page for OffsetPage {
                 push_frame_time(&mut self.frame_times, self.tm.real_time());
             }
         });
+
+        fn calculate_pos(x: f32) -> f32 {
+            let base = (x.abs() * 9.0) + 1.0;
+            let value = base.log(10.0);
+            value * x.signum()
+        }
 
         self.emitter.draw(get_frame_time());
 
