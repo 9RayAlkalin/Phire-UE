@@ -377,7 +377,7 @@ impl Scene for MainScene {
         s.update(tm);
         let gyro = GYRO.lock().unwrap();
         let rate = gyro.clone();
-        let rate = mouse_position_local();
+        // let rate = mouse_position_local();
         drop(gyro);
 
         let rx = rate.x.clamp(-MAX_ROTATE_RATE, MAX_ROTATE_RATE);
