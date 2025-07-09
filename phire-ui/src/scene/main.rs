@@ -6,13 +6,13 @@ use crate::{
     mp::MPPanel,
     page::{HomePage, NextPage, Page, ResPackItem, SharedState, MAX_ROTATE_RATE, RESTORE_RATE, ROT_SCALE_X, ROT_SCALE_Y},
     save_data,
-    scene::{TEX_BACKGROUND, TEX_BACKGROUND_BLUR, TEX_ICON_BACK}, GYRO,
+    scene::{TEX_BACKGROUND, TEX_BACKGROUND_BLUR, TEX_ICON_BACK},
 };
 use anyhow::{anyhow, Context, Result};
 use macroquad::prelude::*;
 use phire::{
     core::ResPackInfo,
-    ext::{blur_image, unzip_into, RectExt, SafeTexture, ScaleType},
+    ext::{blur_image, unzip_into, RectExt, SafeTexture, ScaleType, GYRO},
     scene::{return_file, show_error, show_message, take_file, NextScene, Scene},
     task::Task,
     time::TimeManager,

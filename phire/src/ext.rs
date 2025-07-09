@@ -23,6 +23,7 @@ use tracing::{debug, info_span};
 use lazy_static::lazy_static;
 
 pub type LocalTask<R> = Option<Pin<Box<dyn Future<Output = R>>>>;
+pub static GYRO: Mutex<Vec3> = Mutex::new(Vec3::new(0.0, 0.0, 0.0));
 
 pub trait JoinToString {
     fn join(self, sep: &str) -> String;

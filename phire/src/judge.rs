@@ -1,7 +1,7 @@
 use crate::{
     config::Config,
-    core::{BadNote, Chart, Note, NoteKind, Point, Resource, Vector, NOTE_WIDTH_RATIO_BASE},
-    ext::{get_viewport, NotNanExt},
+    core::{BadNote, Chart, Matrix, Note, NoteKind, Point, Resource, Vector, NOTE_WIDTH_RATIO_BASE},
+    ext::{get_viewport, NotNanExt, GYRO},
 };
 use macroquad::prelude::{
     utils::{register_input_subscriber, repeat_all_miniquad_input},
@@ -258,6 +258,7 @@ pub struct Judge {
 
     pub(crate) inner: JudgeInner,
     pub judgements: RefCell<Vec<(f32, u32, u32, Result<Judgement, bool>)>>,
+    pub ro: f32,
 }
 
 static SUBSCRIBER_ID: Lazy<usize> = Lazy::new(register_input_subscriber);
@@ -285,6 +286,7 @@ impl Judge {
 
             inner: JudgeInner::new(chart.lines.iter().map(|it| it.notes.iter().filter(|it| !it.fake).count() as u32).sum()),
             judgements: RefCell::new(Vec::new()),
+            ro: 0.,
         }
     }
 
@@ -324,7 +326,17 @@ impl Judge {
         });
     }
 
-    fn touch_transform(flip_x: bool, scale: f32) -> impl Fn(&mut Touch) {
+    fn rotate_vec2(vec: Vec2, angle_rad: f32) -> Vec2 {
+        let cos_theta = angle_rad.cos();
+        let sin_theta = angle_rad.sin();
+
+        Vec2::new(
+            vec.x * cos_theta - vec.y * sin_theta,
+            vec.x * sin_theta + vec.y * cos_theta,
+        )
+    }
+
+    fn touch_transform(flip_x: bool, scale: f32, ro: f32) -> impl Fn(&mut Touch) {
         let vp = get_viewport();
         move |touch| {
             let p = touch.position;
@@ -335,6 +347,7 @@ impl Judge {
             if flip_x {
                 touch.position.x *= -1.;
             }
+            touch.position = Self::rotate_vec2(touch.position, ro);
             touch.position /= scale;
         }
     }
@@ -342,7 +355,7 @@ impl Judge {
     pub fn get_touches(scale: f32) -> Vec<Touch> {
         TOUCHES.with(|it| {
             let guard = it.borrow();
-            let tr = Self::touch_transform(false, scale);
+            let tr = Self::touch_transform(false, scale, 0.);
             guard
                 .0
                 .iter()
@@ -401,7 +414,9 @@ impl Judge {
                     time: f64::NEG_INFINITY,
                 });
             }
-            let tr = Self::touch_transform(res.config.flip_x(), res.config.chart_ratio);
+            let gyro = GYRO.lock().unwrap().clone().z;
+            self.ro -= gyro * 0.012;
+            let tr = Self::touch_transform(res.config.flip_x(), res.config.chart_ratio, self.ro);
             touches
                 .into_iter()
                 .map(|mut it| {

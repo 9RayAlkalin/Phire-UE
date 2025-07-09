@@ -1,5 +1,5 @@
 use super::{BpmList, Effect, JudgeLine, JudgeLineKind, Matrix, Resource, UIElement, Vector, Video};
-use crate::{fs::FileSystem, judge::JudgeStatus, ui::Ui};
+use crate::{ext::GYRO, fs::FileSystem, judge::JudgeStatus, ui::Ui};
 use anyhow::{Context, Result};
 use macroquad::prelude::*;
 use sasa::AudioClip;

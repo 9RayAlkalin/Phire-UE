@@ -13,8 +13,8 @@ use super::{
 use crate::{
     bin::{BinaryReader, BinaryWriter},
     config::{Config, Mods},
-    core::{copy_fbo, BadNote, Chart, ChartExtra, Effect, Point, Resource, UIElement, Vector, BUFFER_SIZE},
-    ext::{ease_in_out_quartic, get_latency, parse_time, push_frame_time, screen_aspect, semi_white, validate_combo, RectExt, SafeTexture},
+    core::{copy_fbo, BadNote, Chart, ChartExtra, Effect, Matrix, Point, Resource, UIElement, Vector, BUFFER_SIZE},
+    ext::{ease_in_out_quartic, get_latency, parse_time, push_frame_time, screen_aspect, semi_white, validate_combo, RectExt, SafeTexture, GYRO},
     fs::FileSystem,
     info::{ChartFormat, ChartInfo},
     judge::Judge,
@@ -152,6 +152,7 @@ pub struct GameScene {
     update_fn: Option<UpdateFn>,
 
     pub touch_points: Vec<(f32, f32)>,
+    pub ro: f32,
 }
 
 macro_rules! reset {
@@ -441,6 +442,7 @@ impl GameScene {
             update_fn,
 
             touch_points: Vec::new(),
+            ro: 0.0,
         })
     }
 
@@ -683,6 +685,7 @@ impl GameScene {
             ui.fill_circle(pos.0, pos.1, 0.04, Color { a: 0.4, ..BLUE });
         }
         if tm.paused() {
+            self.ro = 0.0;
             let o = if self.mode == GameMode::Exercise { -0.3 } else { 0. };
             let s = 0.06;
             let w = 0.05;
@@ -1352,9 +1355,13 @@ impl Scene for GameScene {
             draw_rectangle(x_range * 2. - 1., -h, (1. - x_range * 2.) * 2., h * 2., Color::new(0., 0., 0., res.alpha * res.info.background_dim));
         }
 
+        let gyro = GYRO.lock().unwrap().clone().z;
+        self.ro += gyro * 0.012;
+
         set_camera( &Camera2D {
             zoom: if res.config.chart_ratio < 1. { vec2(asp2_chart / asp2_window * ratio, -asp2_chart * ratio) } else { vec2(1. * ratio, -asp2_chart * ratio) },
             viewport: if res.config.chart_ratio < 1. { viewport_window } else { viewport_chart },
+            rotation: self.ro.to_degrees(),
             ..Default::default()
         });
         
