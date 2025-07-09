@@ -73,7 +73,7 @@ impl OffsetPage {
             emitter,
             color: respack.info.fx_perfect(),
 
-            slider: Slider::new(-500.0..500.0, 5.),
+            slider: Slider::new(-200.0..800.0, 1.),
 
             touched: false,
             touch: None,
@@ -129,8 +129,8 @@ impl Page for OffsetPage {
         let x = touch.position.x;
         let y = touch.position.y * screen_aspect();
         if touch.phase == TouchPhase::Started
-            && (-0.80..0.00).contains(&x)
-            && (-0.73..0.94).contains(&y)
+            && (-0.97..0.97).contains(&x)
+            && (-0.60..0.00).contains(&y)
         {
             self.touched = true;
         }
@@ -150,22 +150,33 @@ impl Page for OffsetPage {
                 self.tm.update(pos);
             }
         }
+
+        let config = &mut get_data_mut().config;
+        if let Some(key) = get_last_key_pressed() {
+            if key == KeyCode::Left {
+                config.offset -= 0.005;
+            } else if key == KeyCode::Right {
+                config.offset += 0.005;
+            } else {
+                self.touched = true;
+            };
+        };
         Ok(())
     }
 
     fn render(&mut self, ui: &mut Ui, s: &mut SharedState) -> Result<()> {
         let t = s.t;
+        let aspect = 1. / screen_aspect();
         s.render_fader(ui, |ui, c| {
-            let lf = -0.92;
+            let lf = -0.97;
             let mut r = ui.content_rect();
             r.w += r.x - lf;
             r.x = lf;
-            ui.fill_path(&r.rounded(0.02), semi_black(c.a * 0.4));
-
-            let ct = (-0.4, r.bottom() - 0.12);
-            let hw = 0.4;
+            ui.fill_path(&r.rounded(0.00), semi_black(c.a * 0.4));
+            let ct = r.center();
+            let hw = 0.3;
             let hh = 0.0075;
-            ui.fill_rect(Rect::new(ct.0 - hw, ct.1 - hh / 2., hw * 2., hh), c);
+            ui.fill_rect(Rect::new(0.0 - hh / 2., ct.y - aspect * 0.4 - hw / 2., hh, hw), c);
 
             let ot = t;
 
@@ -176,7 +187,7 @@ impl Page for OffsetPage {
                 let latency = get_latency(&self.audio, &self.frame_times);
                 t -= latency;
                 ui.text(format!("{} {:.0}ms", tl!("estimated"), latency * 1000.))
-                    .pos(0.54, 0.24)
+                    .pos(0.0, ct.y + aspect * 0.5)
                     .anchor(0.5, 1.)
                     .size(0.5)
                     .color(Color::new(1., 1., 1., 0.8 * c.a))
@@ -189,7 +200,7 @@ impl Page for OffsetPage {
             if t >= 2. {
                 t -= 2.;
             }
-            let ny = ct.1 + (t - 1.) * 0.75;
+            let ny = (t - 1.) * 0.9;
             if self.touched {
                 let latency = t - 1.;
                 self.touch = Some((latency, ot, ny));
@@ -204,19 +215,20 @@ impl Page for OffsetPage {
                     amplifier: config.volume_sfx,
                 }).unwrap();
             }
-            if t <= 1. {
-                let w = NOTE_WIDTH_RATIO_BASE * config.note_scale * 2.;
-                let h = w * self.click.height() / self.click.width();
-                let r = Rect::new(ct.0 - w / 2., ny - h / 2., w, h);
-                ui.fill_rect(r, (*self.click, r, ScaleType::Fit, c));
-                self.cali_last = true;
-            } else {
-                if self.cali_last {
-                    let g = ui.to_global(ct);
-                    self.emitter.emit_at(vec2(g.0, g.1), 0., self.color);
-                }
-                self.cali_last = false;
-            }
+
+            // if t <= 1. {
+            //     let w = NOTE_WIDTH_RATIO_BASE * config.note_scale * 2.;
+            //     let h = w * self.click.height() / self.click.width();
+            //     let r = Rect::new(0.0 - w / 2., ny - h / 2., w, h);
+            //     ui.fill_rect(r, (*self.click, r, ScaleType::Fit, c));
+            //     self.cali_last = true;
+            // } else {
+            //     if self.cali_last {
+            //         let g = ui.to_global(ct);
+            //         self.emitter.emit_at(vec2(g.0, g.1), 0., self.color);
+            //     }
+            //     self.cali_last = false;
+            // }
 
             if let Some((latency, time, pos)) = &self.touch {
                 let p = (ot - time) / Self::FADE_TIME;
@@ -228,10 +240,10 @@ impl Page for OffsetPage {
                         a: (if p <= 0.5 { 1. } else { (1. - p) * 2. }) * c.a * self.color.a,
                         ..self.color
                     };
-                    ui.fill_rect(Rect::new(ct.0 - hw, pos - hh / 2., hw * 2., hh), c);
+                    ui.fill_rect(Rect::new(pos - hh / 2., ct.y - aspect * 0.4 - hw / 2., hh, hw), c);
 
                     ui.text(format!("{} {:.0}ms", tl!("now"), latency * 1000.))
-                        .pos(0.54, 0.10)
+                        .pos(0.0, ct.y + aspect * 0.3)
                         .anchor(0.5, 1.)
                         .size(0.5)
                         .color(Color::new(1., 1., 1., 0.8 * c.a))
@@ -245,7 +257,7 @@ impl Page for OffsetPage {
                 self.latency_record.iter().sum::<f32>() / self.latency_record.len() as f32
             };
             ui.text(format!("{} {:.0}ms", tl!("avg"), avg_latency * 1000.))
-                .pos(0.54, 0.17)
+                .pos(0.0, ct.y + aspect * 0.4)
                 .anchor(0.5, 1.)
                 .size(0.5)
                 .color(Color::new(1., 1., 1., 0.8 * c.a))
@@ -253,7 +265,7 @@ impl Page for OffsetPage {
 
             let offset = config.offset * 1000.;
             self.slider
-                .render(ui, Rect::new(0.46, -0.1, 0.45, 0.2), ot, c, offset, format!("{offset:.0}ms"));
+                .render(ui, Rect::new(-0.08, ct.y + aspect * 0.1 - 0.2 / 2., 0.45, 0.2), ot, c, offset, format!("{offset:.0}ms"));
 
             if config.adjust_time {
                 push_frame_time(&mut self.frame_times, self.tm.real_time());
