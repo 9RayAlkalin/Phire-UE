@@ -239,7 +239,7 @@ impl Page for OffsetPage {
                         a: (if p <= 0.5 { 1. } else { (1. - p) * 2. }) * c.a * self.color.a,
                         ..self.color
                     };
-                    if latency.abs() <= 0.500 {
+                    if latency.abs() <= 0.700 {
                         println!("{:+.4} {:+.4}", latency, calculate_pos(latency));
                         ui.fill_rect(Rect::new(calculate_pos(latency) - hh / 2., ct.y - aspect * 0.4 - hw / 2., hh, hw), c);
                     }
