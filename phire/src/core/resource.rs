@@ -28,23 +28,23 @@ fn default_duration() -> f32 {
 }
 
 #[inline]
-fn default_perfect_fx() -> u32 {
-    0xffffeca0
+fn default_perfect_fx() -> (f32, f32, f32, f32) {
+    (1.0, 0.9, 0.65, 0.9)
 }
 
 #[inline]
-fn default_good_fx() -> u32 {
-    0xffb4e1ff
+fn default_good_fx() -> (f32, f32, f32, f32) {
+    (0.70, 0.9, 1.0, 1.0)
 }
 
 #[inline]
-fn default_perfect_line() -> u32 {
-    0xfffeffa9
+fn default_perfect_line() -> (f32, f32, f32, f32) {
+    (1.0, 1.0, 0.7, 1.0)
 }
 
 #[inline]
-fn default_good_line() -> u32 {
-    0xffa2eeff
+fn default_good_line() -> (f32, f32, f32, f32) {
+    (0.65, 0.94, 1.0, 1.0)
 }
 
 #[inline]
@@ -70,6 +70,8 @@ pub struct ResPackInfo {
     pub hide_particles: bool,
     #[serde(default = "default_tinted")]
     pub hit_fx_tinted: bool,
+    #[serde(default = "default_tinted")]
+    pub line_tinted: bool,
 
     pub hold_atlas: (u32, u32),
     #[serde(rename = "holdAtlasMH")]
@@ -83,14 +85,14 @@ pub struct ResPackInfo {
     pub hold_compact: bool,
 
     #[serde(default = "default_perfect_fx")]
-    pub color_perfect_fx: u32,
+    pub color_perfect_fx: (f32, f32, f32, f32),
     #[serde(default = "default_good_fx")]
-    pub color_good_fx: u32,
+    pub color_good_fx: (f32, f32, f32, f32),
 
     #[serde(default = "default_perfect_line")]
-    pub color_perfect_line: u32,
+    pub color_perfect_line: (f32, f32, f32, f32),
     #[serde(default = "default_good_line")]
-    pub color_good_line: u32,
+    pub color_good_line: (f32, f32, f32, f32),
 
     #[serde(default)]
     pub description: String,
@@ -99,7 +101,7 @@ pub struct ResPackInfo {
 impl ResPackInfo {
     pub fn fx_perfect(&self) -> Color {
         if self.hit_fx_tinted {
-            Color::from_hex(self.color_perfect_fx)
+            Color::new(self.color_perfect_fx.0, self.color_perfect_fx.1, self.color_perfect_fx.2, self.color_perfect_fx.3)
         } else {
             WHITE
         }
@@ -107,18 +109,26 @@ impl ResPackInfo {
 
     pub fn fx_good(&self) -> Color {
         if self.hit_fx_tinted {
-            Color::from_hex(self.color_good_fx)
+            Color::new(self.color_good_fx.0, self.color_good_fx.1, self.color_good_fx.2, self.color_good_fx.3)
         } else {
             WHITE
         }
     }
 
     pub fn line_perfect(&self) -> Color {
-        Color::from_hex(self.color_perfect_line)
+        if self.line_tinted {
+            Color::new(self.color_perfect_line.0, self.color_perfect_line.1, self.color_perfect_line.2, self.color_perfect_line.3)
+        } else {
+            WHITE
+        }
     }
 
     pub fn line_good(&self) -> Color {
-        Color::from_hex(self.color_good_line)
+        if self.line_tinted {
+            Color::new(self.color_good_line.0, self.color_good_line.1, self.color_good_line.2, self.color_good_line.3)
+        } else {
+            WHITE
+        }
     }
 }
 
