@@ -1152,7 +1152,13 @@ impl Scene for GameScene {
         self.res.time = time;
         if !tm.paused() /*&& self.pause_rewind.is_none()*/ && self.mode != GameMode::View {
             self.gl.quad_gl.viewport(self.res.camera.viewport);
-            self.judge.update(&mut self.res, &mut self.chart, &mut self.bad_notes);
+
+            let ft = get_frame_time();
+            let gyro = GYRO.lock().unwrap();
+            self.ro += gyro.z * ft;
+            drop(gyro);
+
+            self.judge.update(&mut self.res, &mut self.chart, &mut self.bad_notes, self.ro);
             self.gl.quad_gl.viewport(None);
         }
         if let Some(update) = &mut self.update_fn {
