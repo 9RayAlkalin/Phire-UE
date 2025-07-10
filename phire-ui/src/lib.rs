@@ -28,6 +28,7 @@ use phire::{
     scene::{show_error, show_message},
     time::TimeManager,
     ui::{FontArc, TextPainter},
+    ext::GYRO,
     Main,
 };
 use scene::MainScene;
@@ -40,7 +41,6 @@ static AA_TX: Mutex<Option<mpsc::Sender<i32>>> = Mutex::new(None);
 static DATA_PATH: Mutex<Option<String>> = Mutex::new(None);
 static CACHE_DIR: Mutex<Option<String>> = Mutex::new(None);
 pub static mut DATA: Option<Data> = None;
-pub static GYRO: Mutex<Vec3> = Mutex::new(Vec3::new(0.0, 0.0, 0.0));
 
 #[cfg(feature = "closed")]
 pub async fn load_res(name: &str) -> Vec<u8> {
