@@ -1140,7 +1140,7 @@ impl Scene for GameScene {
         if !tm.paused() /*&& self.pause_rewind.is_none()*/ && self.mode != GameMode::View {
             self.gl.quad_gl.viewport(self.res.camera.viewport);
 
-            let angle = GYRO.lock().unwrap().apply();
+            let angle = GYRO.lock().unwrap().get_angle();
 
             self.judge.update(&mut self.res, &mut self.chart, &mut self.bad_notes, -angle);
             self.gl.quad_gl.viewport(None);
@@ -1345,7 +1345,7 @@ impl Scene for GameScene {
             draw_rectangle(x_range * 2. - 1., -h, (1. - x_range * 2.) * 2., h * 2., Color::new(0., 0., 0., res.alpha * res.info.background_dim));
         }
 
-        let angle = GYRO.lock().unwrap().apply();
+        let angle = GYRO.lock().unwrap().get_angle();
         if tm.paused() {
             GYRO.lock().unwrap().reset();
         }

@@ -34,7 +34,7 @@ use phire::{
 use scene::MainScene;
 use std::sync::{mpsc, Mutex};
 use std::time::Instant;
-use nalgebra::Vector3;
+use nalgebra::{UnitQuaternion, Vector3};
 use tracing::{error, info};
 use phire::gyro::{GyroData, ROTATION_VECTOR_DATA};
 
@@ -493,11 +493,11 @@ pub unsafe extern "C" fn Java_quad_1native_QuadNative_updateGyroScope(
 pub unsafe extern "C" fn Java_quad_1native_QuadNative_updateRotationVector(
     env: ndk_sys::JNIEnv,
     _class: ndk_sys::jclass,
-    x: ndk_sys::jfloat,
-    y: ndk_sys::jfloat,
-    z: ndk_sys::jfloat,
+    roll: ndk_sys::jfloat,
+    pitch: ndk_sys::jfloat,
+    yaw: ndk_sys::jfloat,
 ) {
     if let mut gyro_data = ROTATION_VECTOR_DATA.lock().unwrap() {
-        *gyro_data = Vector3::new(x, y, z);
+        *gyro_data = Vector3::new(roll, pitch, yaw);
     }
 }
