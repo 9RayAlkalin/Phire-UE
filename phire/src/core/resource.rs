@@ -34,7 +34,7 @@ fn default_perfect_fx() -> (f32, f32, f32, f32) {
 
 #[inline]
 fn default_good_fx() -> (f32, f32, f32, f32) {
-    (0.70, 0.9, 1.0, 1.0)
+    (0.70, 0.9, 1.0, 0.9)
 }
 
 #[inline]
