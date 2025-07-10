@@ -28,14 +28,8 @@ lazy_static! {
 
 impl Gyro {
     pub fn new() -> Self {
-        let rotation_vector = ROTATION_VECTOR_DATA.lock().unwrap().clone();
-        let delta_quat = UnitQuaternion::from_euler_angles(
-            rotation_vector.x, 
-            rotation_vector.y, 
-            rotation_vector.z
-        );
         Self {
-            rotation: delta_quat,
+            rotation: UnitQuaternion::identity(),
             last_gyro_data: None,
         }
     }
@@ -68,12 +62,6 @@ impl Gyro {
     }
 
     pub fn reset(&mut self) {
-        let rotation_vector = ROTATION_VECTOR_DATA.lock().unwrap().clone();
-        let delta_quat = UnitQuaternion::from_euler_angles(
-            rotation_vector.x, 
-            rotation_vector.y, 
-            rotation_vector.z
-        );
         self.rotation = UnitQuaternion::identity();
     }
 }
