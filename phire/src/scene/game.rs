@@ -1050,6 +1050,7 @@ impl Scene for GameScene {
             if time >= Self::BEFORE_DURATION { // wait for animation
                 self.res.alpha = 1.;
                 self.state = State::BeforeMusic;
+                GYRO.lock().unwrap().reset();
                 tm.reset();
                 tm.seek_to(self.exercise_range.start as f64);
                 self.last_update_time = tm.real_time();
