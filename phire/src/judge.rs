@@ -258,7 +258,6 @@ pub struct Judge {
 
     pub(crate) inner: JudgeInner,
     pub judgements: RefCell<Vec<(f32, u32, u32, Result<Judgement, bool>)>>,
-    pub ro: f32,
 }
 
 static SUBSCRIBER_ID: Lazy<usize> = Lazy::new(register_input_subscriber);
@@ -286,7 +285,6 @@ impl Judge {
 
             inner: JudgeInner::new(chart.lines.iter().map(|it| it.notes.iter().filter(|it| !it.fake).count() as u32).sum()),
             judgements: RefCell::new(Vec::new()),
-            ro: 0.,
         }
     }
 
@@ -368,7 +366,7 @@ impl Judge {
         })
     }
 
-    pub fn update(&mut self, res: &mut Resource, chart: &mut Chart, bad_notes: &mut Vec<BadNote>) {
+    pub fn update(&mut self, res: &mut Resource, chart: &mut Chart, bad_notes: &mut Vec<BadNote>, ro: f32) {
         if res.config.autoplay() {
             self.auto_play_update(res, chart);
             return;
@@ -414,9 +412,7 @@ impl Judge {
                     time: f64::NEG_INFINITY,
                 });
             }
-            let gyro = GYRO.lock().unwrap().clone().z;
-            self.ro -= gyro * 0.012;
-            let tr = Self::touch_transform(res.config.flip_x(), res.config.chart_ratio, self.ro);
+            let tr = Self::touch_transform(res.config.flip_x(), res.config.chart_ratio, ro);
             touches
                 .into_iter()
                 .map(|mut it| {
