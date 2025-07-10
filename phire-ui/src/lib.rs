@@ -501,4 +501,3 @@ pub unsafe extern "C" fn Java_quad_1native_QuadNative_updateRotationVector(
         *gyro_data = Vector3::new(x, y, z);
     }
 }
-}
