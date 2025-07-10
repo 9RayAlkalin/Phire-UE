@@ -12,11 +12,12 @@ use anyhow::{anyhow, Context, Result};
 use macroquad::prelude::*;
 use phire::{
     core::ResPackInfo,
-    ext::{blur_image, unzip_into, RectExt, SafeTexture, ScaleType, GYRO},
+    ext::{blur_image, unzip_into, RectExt, SafeTexture, ScaleType},
     scene::{return_file, show_error, show_message, take_file, NextScene, Scene},
     task::Task,
     time::TimeManager,
     ui::{button_hit, RectButton, Ui, UI_AUDIO},
+    gyro::GYRO_SCOPE_DATA
 };
 use sasa::{AudioClip, Music};
 use std::{
@@ -375,13 +376,11 @@ impl Scene for MainScene {
         set_camera(&ui.camera());
         let s = &mut self.state;
         s.update(tm);
-        let gyro = GYRO.lock().unwrap();
-        let rate = gyro.clone();
+        let gyro = GYRO_SCOPE_DATA.lock().unwrap().clone().angular_velocity;
         // let rate = mouse_position_local();
-        drop(gyro);
 
-        let rx = rate.x.clamp(-MAX_ROTATE_RATE, MAX_ROTATE_RATE);
-        let ry = rate.y.clamp(-MAX_ROTATE_RATE, MAX_ROTATE_RATE);
+        let rx = gyro.x.clamp(-MAX_ROTATE_RATE, MAX_ROTATE_RATE);
+        let ry = gyro.y.clamp(-MAX_ROTATE_RATE, MAX_ROTATE_RATE);
         let restore_factor = (rx.abs().max(ry.abs())) / MAX_ROTATE_RATE;
         s.gyro_offset.x += -rx * ROT_SCALE_X;
         s.gyro_offset.y += -ry * ROT_SCALE_Y;

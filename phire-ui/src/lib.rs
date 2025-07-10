@@ -28,12 +28,15 @@ use phire::{
     scene::{show_error, show_message},
     time::TimeManager,
     ui::{FontArc, TextPainter},
-    ext::GYRO,
+    gyro::{GYRO, GYRO_SCOPE_DATA},
     Main,
 };
 use scene::MainScene;
 use std::sync::{mpsc, Mutex};
+use std::time::Instant;
+use nalgebra::Vector3;
 use tracing::{error, info};
+use phire::gyro::{GyroData, ROTATION_VECTOR_DATA};
 
 static MESSAGES_TX: Mutex<Option<mpsc::Sender<bool>>> = Mutex::new(None);
 static MESSAGES_TX_FOUCUS_PAUSE: Mutex<Option<mpsc::Sender<bool>>> = Mutex::new(None);
@@ -467,16 +470,35 @@ pub unsafe extern "C" fn Java_quad_1native_QuadNative_antiAddictionCallback(
 
 #[cfg(target_os = "android")]
 #[no_mangle]
-pub unsafe extern "C" fn Java_quad_1native_QuadNative_updateGyro(
+pub unsafe extern "C" fn Java_quad_1native_QuadNative_updateGyroScope(
     env: ndk_sys::JNIEnv,
     _class: ndk_sys::jclass,
     x: ndk_sys::jfloat,
     y: ndk_sys::jfloat,
     z: ndk_sys::jfloat,
 ) {
-    if let mut gyro = GYRO.lock().unwrap() {
-        gyro.x = x as f32;
-        gyro.y = y as f32;
-        gyro.z = z as f32;
+    if let mut gyro_data = GYRO_SCOPE_DATA.lock().unwrap() {
+        gyro_data.angular_velocity = Vector3::new(x, y, z);
+        gyro_data.timestamp = Instant::now();
     }
+    let gyro_data = GyroData {
+        angular_velocity: Vector3::new(x, y, z),
+        timestamp: Instant::now(),
+    };
+    GYRO.lock().unwrap().update(gyro_data)
+}
+
+#[cfg(target_os = "android")]
+#[no_mangle]
+pub unsafe extern "C" fn Java_quad_1native_QuadNative_updateRotationVector(
+    env: ndk_sys::JNIEnv,
+    _class: ndk_sys::jclass,
+    x: ndk_sys::jfloat,
+    y: ndk_sys::jfloat,
+    z: ndk_sys::jfloat,
+) {
+    if let mut gyro_data = ROTATION_VECTOR_DATA.lock().unwrap() {
+        *gyro_data = Vector3::new(x, y, z);
+    }
+}
 }

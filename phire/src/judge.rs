@@ -1,7 +1,7 @@
 use crate::{
     config::Config,
-    core::{BadNote, Chart, Matrix, Note, NoteKind, Point, Resource, Vector, NOTE_WIDTH_RATIO_BASE},
-    ext::{get_viewport, NotNanExt, GYRO},
+    core::{BadNote, Chart, Note, NoteKind, Point, Resource, Vector, NOTE_WIDTH_RATIO_BASE},
+    ext::{get_viewport, NotNanExt},
 };
 use macroquad::prelude::{
     utils::{register_input_subscriber, repeat_all_miniquad_input},
@@ -334,7 +334,7 @@ impl Judge {
         )
     }
 
-    fn touch_transform(flip_x: bool, scale: f32, ro: f32) -> impl Fn(&mut Touch) {
+    fn touch_transform(flip_x: bool, scale: f32, angle: f32) -> impl Fn(&mut Touch) {
         let vp = get_viewport();
         move |touch| {
             let p = touch.position;
@@ -345,7 +345,7 @@ impl Judge {
             if flip_x {
                 touch.position.x *= -1.;
             }
-            touch.position = Self::rotate_vec2(touch.position, ro);
+            touch.position = Self::rotate_vec2(touch.position, angle);
             touch.position /= scale;
         }
     }
@@ -366,7 +366,7 @@ impl Judge {
         })
     }
 
-    pub fn update(&mut self, res: &mut Resource, chart: &mut Chart, bad_notes: &mut Vec<BadNote>, ro: f32) {
+    pub fn update(&mut self, res: &mut Resource, chart: &mut Chart, bad_notes: &mut Vec<BadNote>, angle: f32) {
         if res.config.autoplay() {
             self.auto_play_update(res, chart);
             return;
@@ -412,7 +412,7 @@ impl Judge {
                     time: f64::NEG_INFINITY,
                 });
             }
-            let tr = Self::touch_transform(res.config.flip_x(), res.config.chart_ratio, ro);
+            let tr = Self::touch_transform(res.config.flip_x(), res.config.chart_ratio, angle);
             touches
                 .into_iter()
                 .map(|mut it| {
