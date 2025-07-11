@@ -1,44 +1,49 @@
 use std::time::Instant;
 use std::sync::Mutex;
 use std::f32;
-use nalgebra::{Quaternion, Unit, UnitQuaternion, Vector3};
-use macroquad::prelude::*;
+use nalgebra::{Unit, UnitQuaternion, Vector3};
 use lazy_static::lazy_static;
+use tracing::debug;
 
-// 陀螺仪数据结构
+use crate::config::Config;
+
 #[derive(Debug, Clone, Copy)]
 pub struct GyroData {
     pub angular_velocity: Vector3<f32>, // 角速度 (rad/s)
     pub timestamp: Instant,             // 数据时间戳
 }
 
-// 画面稳定器
 pub struct Gyro {
-    rotation: UnitQuaternion<f32>,
-    last_gyro_data: Option<GyroData>,
+    rotation_gravity: UnitQuaternion<f32>,
+
+    rotation_gyroscope: UnitQuaternion<f32>,
+    last_gyroscope_data: Option<GyroData>,
 }
 
 lazy_static! {
-    pub static ref GYRO_SCOPE_DATA: Mutex<GyroData> = Mutex::new(GyroData {
+    pub static ref GYROSCOPE_DATA: Mutex<GyroData> = Mutex::new(GyroData {
         angular_velocity: Vector3::new(0.0, 0.0, 0.0),
         timestamp: Instant::now()
     });
-    pub static ref ROTATION_VECTOR_DATA: Mutex<Vector3<f32>> = Mutex::new(Vector3::new(0.0, 0.0, 0.0));
     pub static ref GYRO: Mutex<Gyro> = Mutex::new(Gyro::new());
 }
 
 impl Gyro {
     pub fn new() -> Self {
-        let rotation_vector = ROTATION_VECTOR_DATA.lock().unwrap();
-        let origin = UnitQuaternion::from_euler_angles(0.0, f32::consts::PI / 2.0, 0.0) * UnitQuaternion::from_euler_angles(rotation_vector.x, rotation_vector.y, 0.0);
         Self {
-            rotation: origin,
-            last_gyro_data: None,
+            rotation_gravity: UnitQuaternion::identity(),
+
+            rotation_gyroscope: UnitQuaternion::identity(),
+            last_gyroscope_data: None,
         }
     }
 
-    pub fn update(&mut self, gyro_data: GyroData) {
-        if let Some(last) = self.last_gyro_data {
+    pub(crate) fn reset_gyroscope(&mut self) {
+        self.rotation_gyroscope = UnitQuaternion::identity();
+    }
+
+    pub fn update_gyroscope(&mut self, gyro_data: GyroData) {
+        if let Some(last) = self.last_gyroscope_data {
             let dt = gyro_data.timestamp
                 .duration_since(last.timestamp)
                 .as_secs_f32();
@@ -48,24 +53,53 @@ impl Gyro {
 
             if angle > 0.0 {
                 let axis_unit: Unit<Vector3<f32>> = Unit::new_normalize(omega);
-                let dq = UnitQuaternion::from_axis_angle(&axis_unit, angle); // 增量四元数
-                self.rotation = self.rotation * dq;
+                let dq = UnitQuaternion::from_axis_angle(&axis_unit, angle); // 增量
+                self.rotation_gyroscope *= dq;
             }
         }
-        self.last_gyro_data = Some(gyro_data);
-}
-
-    pub fn get_angle(&self) -> f32 {
-        let rotation_matrix = self.rotation.to_rotation_matrix().euler_angles();
-        debug!("RotationMatrix: {:+.7}, {:+.7}, {:+.7}", rotation_matrix.0, rotation_matrix.1, rotation_matrix.2);
-        rotation_matrix.2
+        self.last_gyroscope_data = Some(gyro_data);
     }
 
-    pub fn reset(&mut self) {
-        let rotation_vector = ROTATION_VECTOR_DATA.lock().unwrap();
-        let origin = UnitQuaternion::from_euler_angles(0.0, f32::consts::PI / 2.0, 0.0) * UnitQuaternion::from_euler_angles(rotation_vector.x, rotation_vector.y, 0.0);
-        self.rotation = origin;
-        let q1 = origin.to_rotation_matrix().euler_angles();
-        debug!("RotationVector: {:+.7}, {:+.7}, {:+.7}", q1.0, q1.1, q1.2);
+    pub fn update_gravity(&mut self, gravity_data: Vector3<f32>) {
+        let norm = gravity_data.norm();
+        if norm == 0.0 {
+            return;
+        }
+
+        let g_dev = gravity_data / norm;  // 归一化, g_dev 指向重力方向
+
+        let world_gravity = Vector3::new(0.0, -1.0, 0.0); // 世界坐标系下的重力方向
+
+        // g_dev 到 world_gravity 的旋转
+        let q = UnitQuaternion::rotation_between(&g_dev, &world_gravity)
+            .unwrap_or_else(UnitQuaternion::identity);
+
+        self.rotation_gravity = q;
+    }
+
+    fn get_gyroscope_angle(&self) -> f32 {
+        let (_, _, yaw) = self.rotation_gyroscope.to_rotation_matrix().euler_angles();
+        yaw
+    }
+
+    fn get_gravity_angle(&self) -> f32 {
+        let world = self.rotation_gravity.transform_vector(&Vector3::new(0.0, 1.0, 0.0));
+        //let device = self.rotation.transform_vector(&Vector3::new(1.0, 0.0, 0.0));
+
+        let proj: nalgebra::Matrix<f32, nalgebra::Const<3>, nalgebra::Const<1>, nalgebra::ArrayStorage<f32, 3, 1>> = Vector3::new(world.x, world.y, world.z);
+        let tan = world.y.atan2(proj.x);
+        tan
+    }
+
+    pub fn get_angle(&self, config: &Config) -> f32 {
+        if config.rotation_mode {
+            if config.rotation_flat_mode {
+                self.get_gyroscope_angle()
+            } else {
+                self.get_gravity_angle()
+            }
+        } else {
+            0.0
+        }
     }
 }

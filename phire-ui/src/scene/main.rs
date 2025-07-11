@@ -17,7 +17,7 @@ use phire::{
     task::Task,
     time::TimeManager,
     ui::{button_hit, RectButton, Ui, UI_AUDIO},
-    gyro::GYRO_SCOPE_DATA
+    gyro::GYROSCOPE_DATA
 };
 use sasa::{AudioClip, Music};
 use std::{
@@ -376,7 +376,7 @@ impl Scene for MainScene {
         set_camera(&ui.camera());
         let s = &mut self.state;
         s.update(tm);
-        let gyro = GYRO_SCOPE_DATA.lock().unwrap().clone().angular_velocity;
+        let gyro = GYROSCOPE_DATA.lock().unwrap().clone().angular_velocity;
         // let rate = mouse_position_local();
 
         let rx = gyro.x.clamp(-MAX_ROTATE_RATE, MAX_ROTATE_RATE);

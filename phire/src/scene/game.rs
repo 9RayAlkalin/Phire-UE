@@ -11,7 +11,7 @@ use super::{
     request_input, return_input, show_message, take_input, EndingScene, NextScene, Scene,
 };
 use crate::{
-    bin::{BinaryReader, BinaryWriter}, config::{Config, Mods}, core::{copy_fbo, BadNote, Chart, ChartExtra, Effect, Matrix, Point, Resource, UIElement, Vector, BUFFER_SIZE}, ext::{ease_in_out_quartic, get_latency, parse_time, push_frame_time, screen_aspect, semi_white, validate_combo, RectExt, SafeTexture}, fs::FileSystem, gyro::{Gyro, GYRO, GYRO_SCOPE_DATA}, info::{ChartFormat, ChartInfo}, judge::Judge, parse::{parse_extra, parse_pec, parse_phigros, parse_rpe}, task::Task, time::TimeManager, ui::{RectButton, Ui}
+    bin::{BinaryReader, BinaryWriter}, config::{Config, Mods}, core::{copy_fbo, BadNote, Chart, ChartExtra, Effect, Matrix, Point, Resource, UIElement, Vector, BUFFER_SIZE}, ext::{ease_in_out_quartic, get_latency, parse_time, push_frame_time, screen_aspect, semi_white, validate_combo, RectExt, SafeTexture}, fs::FileSystem, gyro::{Gyro, GYRO, GYROSCOPE_DATA}, info::{ChartFormat, ChartInfo}, judge::Judge, parse::{parse_extra, parse_pec, parse_phigros, parse_rpe}, task::Task, time::TimeManager, ui::{RectButton, Ui}
 };
 use anyhow::{bail, Context, Result};
 use concat_string::concat_string;
@@ -1044,26 +1044,29 @@ impl Scene for GameScene {
             tm.pause();
             self.music.pause()?;
         }
+        if tm.paused() {
+            GYRO.lock().unwrap().reset_gyroscope();
+        }
         let time = tm.now() as f32;
         let time = match self.state {
-        State::Starting => {
-            if time >= Self::BEFORE_DURATION { // wait for animation
-                self.res.alpha = 1.;
-                self.state = State::BeforeMusic;
-                tm.reset();
-                tm.seek_to(self.exercise_range.start as f64);
-                self.last_update_time = tm.real_time();
-                if self.first_in && self.mode == GameMode::Exercise {
-                    //tm.pause();
-                    //self.music.pause()?;
-                    self.first_in = false;
+            State::Starting => {
+                if time >= Self::BEFORE_DURATION { // wait for animation
+                    self.res.alpha = 1.;
+                    self.state = State::BeforeMusic;
+                    tm.reset();
+                    tm.seek_to(self.exercise_range.start as f64);
+                    self.last_update_time = tm.real_time();
+                    if self.first_in && self.mode == GameMode::Exercise {
+                        //tm.pause();
+                        //self.music.pause()?;
+                        self.first_in = false;
+                    }
+                    tm.now() as f32
+                } else {
+                    GYRO.lock().unwrap().reset_gyroscope();
+                    self.res.alpha = 1. - (1. - time / Self::BEFORE_TIME).clamp(0., 1.).powi(3);
+                    self.exercise_range.start
                 }
-                tm.now() as f32
-            } else {
-                GYRO.lock().unwrap().reset();
-                self.res.alpha = 1. - (1. - time / Self::BEFORE_TIME).clamp(0., 1.).powi(3);
-                self.exercise_range.start
-            }
             }
             State::BeforeMusic => {
                 if time >= 0.0 {
@@ -1141,7 +1144,7 @@ impl Scene for GameScene {
         if !tm.paused() /*&& self.pause_rewind.is_none()*/ && self.mode != GameMode::View {
             self.gl.quad_gl.viewport(self.res.camera.viewport);
 
-            let angle = GYRO.lock().unwrap().get_angle();
+            let angle = GYRO.lock().unwrap().get_angle(&self.res.config);
 
             self.judge.update(&mut self.res, &mut self.chart, &mut self.bad_notes, -angle);
             self.gl.quad_gl.viewport(None);
@@ -1346,23 +1349,27 @@ impl Scene for GameScene {
             draw_rectangle(x_range * 2. - 1., -h, (1. - x_range * 2.) * 2., h * 2., Color::new(0., 0., 0., res.alpha * res.info.background_dim));
         }
 
-        let angle = GYRO.lock().unwrap().get_angle();
-        if tm.paused() {
-            GYRO.lock().unwrap().reset();
+        let chart_zoom = if res.config.chart_ratio < 1. { vec2(asp2_chart / asp2_window * ratio, -asp2_chart * ratio) } else { vec2(1. * ratio, -asp2_chart * ratio) };
+        let chart_viewport = if res.config.chart_ratio < 1. { viewport_window } else { viewport_chart };
+
+        if res.config.render_bg_dim && res.config.chart_ratio < 1. {
+            set_camera( &Camera2D {
+                zoom: chart_zoom,
+                viewport: chart_viewport,
+                ..Default::default()
+            });
+            self.gl.quad_gl.render_pass(chart_onto.map(|it| it.render_pass));
+            draw_rectangle(-1., -h, 2., h * 2., Color::new(0., 0., 0., res.alpha * res.info.background_dim));
         }
 
+        let angle = GYRO.lock().unwrap().get_angle(&res.config);
         set_camera( &Camera2D {
-            zoom: if res.config.chart_ratio < 1. { vec2(asp2_chart / asp2_window * ratio, -asp2_chart * ratio) } else { vec2(1. * ratio, -asp2_chart * ratio) },
-            viewport: if res.config.chart_ratio < 1. { viewport_window } else { viewport_chart },
+            zoom: chart_zoom,
+            viewport: chart_viewport,
             rotation: angle.to_degrees(),
             ..Default::default()
         });
-        
         self.gl.quad_gl.render_pass(chart_onto.map(|it| it.render_pass));
-        //self.gl.quad_gl.viewport(chart_target_vp);
-        if res.config.render_bg_dim && res.config.chart_ratio < 1. {
-            draw_rectangle(-1., -h, 2., h * 2., Color::new(0., 0., 0., res.alpha * res.info.background_dim));
-        }
         self.chart.render(ui, res);
 
         self.gl.quad_gl.render_pass(
@@ -1392,7 +1399,7 @@ impl Scene for GameScene {
         {
             set_camera(&Camera2D {
                 zoom: if res.config.chart_ratio < 1. { vec2(asp2_ui_window * ratio, -1. * ratio) } else { vec2(asp2_ui * ratio, -1. * ratio) },
-                viewport: if res.config.chart_ratio < 1. { viewport_window } else { viewport_chart },
+                viewport: chart_viewport,
                 render_target: self.res.chart_target.as_ref().map(|it| it.output()).or(self.res.camera.render_target),
                 ..Default::default()
             });

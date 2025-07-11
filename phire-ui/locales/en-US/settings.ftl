@@ -56,6 +56,9 @@ item-watermark = Watermark
 item-combo = COMBO Text
 item-roman = Roman Mode
 item-chinese = Chinese Mode
+item-rotation-mode = Rotation Mode
+item-rotation-flat-mode = Rotation Mode - Lay Flat
+item-rotation-flat-mode-sub = Orientation calibrates when the game starts. If its wrong, tap reset on the pause screen.
 
 load-cali-failed = Failed to load audio
 not-combo = Cannot be COMBO

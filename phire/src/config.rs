@@ -101,6 +101,9 @@ pub struct Config {
 
     pub fade: f32,
     pub alpha_tint: bool, // note.alpha <=0.5 blue, note.alpha >0.5 red
+
+    pub rotation_mode: bool,
+    pub rotation_flat_mode: bool,
 }
 
 impl Default for Config {
@@ -171,6 +174,9 @@ impl Default for Config {
 
             fade: 0.,
             alpha_tint: false,
+
+            rotation_mode: false,
+            rotation_flat_mode: false,
         }
     }
 }
