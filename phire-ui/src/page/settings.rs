@@ -551,7 +551,7 @@ impl ChartList {
             dhint_btn: DRectButton::new(),
             opt_btn: DRectButton::new(),
             speed_slider: Slider::new(0.1..2.0, 0.05),
-            size_slider: Slider::new(0.8..1.2, 0.005),
+            size_slider: Slider::new(0.0..5.0, 0.005),
         }
     }
 
