@@ -56,6 +56,9 @@ item-watermark = 水印
 item-combo = COMBO 文字
 item-roman = 罗马模式
 item-chinese = 中文模式
+item-rotation-mode = 旋转模式
+item-rotation-flat-mode = 旋转模式 - 平放
+item-rotation-flat-mode-sub = 此模式会根据开始游戏时的方向来矫正方向。如果方向错误，可在暂停游戏页重置方位
 
 load-cali-failed = 加载音频失败
 not-combo = 不能是 COMBO

@@ -6,7 +6,7 @@ use crate::{
     mp::MPPanel,
     page::{HomePage, NextPage, Page, ResPackItem, SharedState, MAX_ROTATE_RATE, RESTORE_RATE, ROT_SCALE_X, ROT_SCALE_Y},
     save_data,
-    scene::{TEX_BACKGROUND, TEX_BACKGROUND_BLUR, TEX_ICON_BACK}, GYRO,
+    scene::{TEX_BACKGROUND, TEX_BACKGROUND_BLUR, TEX_ICON_BACK},
 };
 use anyhow::{anyhow, Context, Result};
 use macroquad::prelude::*;
@@ -17,6 +17,7 @@ use phire::{
     task::Task,
     time::TimeManager,
     ui::{button_hit, RectButton, Ui, UI_AUDIO},
+    gyro::GYROSCOPE_DATA
 };
 use sasa::{AudioClip, Music};
 use std::{
@@ -375,13 +376,11 @@ impl Scene for MainScene {
         set_camera(&ui.camera());
         let s = &mut self.state;
         s.update(tm);
-        let gyro = GYRO.lock().unwrap();
-        let rate = gyro.clone();
+        let gyro = GYROSCOPE_DATA.lock().unwrap().clone().angular_velocity;
         // let rate = mouse_position_local();
-        drop(gyro);
 
-        let rx = rate.x.clamp(-MAX_ROTATE_RATE, MAX_ROTATE_RATE);
-        let ry = rate.y.clamp(-MAX_ROTATE_RATE, MAX_ROTATE_RATE);
+        let rx = gyro.x.clamp(-MAX_ROTATE_RATE, MAX_ROTATE_RATE);
+        let ry = gyro.y.clamp(-MAX_ROTATE_RATE, MAX_ROTATE_RATE);
         let restore_factor = (rx.abs().max(ry.abs())) / MAX_ROTATE_RATE;
         s.gyro_offset.x += -rx * ROT_SCALE_X;
         s.gyro_offset.y += -ry * ROT_SCALE_Y;

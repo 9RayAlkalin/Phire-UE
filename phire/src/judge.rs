@@ -324,7 +324,17 @@ impl Judge {
         });
     }
 
-    fn touch_transform(flip_x: bool, scale: f32) -> impl Fn(&mut Touch) {
+    fn rotate_vec2(vec: Vec2, angle_rad: f32) -> Vec2 {
+        let cos_theta = angle_rad.cos();
+        let sin_theta = angle_rad.sin();
+
+        Vec2::new(
+            vec.x * cos_theta - vec.y * sin_theta,
+            vec.x * sin_theta + vec.y * cos_theta,
+        )
+    }
+
+    fn touch_transform(flip_x: bool, scale: f32, angle: f32) -> impl Fn(&mut Touch) {
         let vp = get_viewport();
         move |touch| {
             let p = touch.position;
@@ -335,6 +345,7 @@ impl Judge {
             if flip_x {
                 touch.position.x *= -1.;
             }
+            touch.position = Self::rotate_vec2(touch.position, angle);
             touch.position /= scale;
         }
     }
@@ -342,7 +353,7 @@ impl Judge {
     pub fn get_touches(scale: f32) -> Vec<Touch> {
         TOUCHES.with(|it| {
             let guard = it.borrow();
-            let tr = Self::touch_transform(false, scale);
+            let tr = Self::touch_transform(false, scale, 0.);
             guard
                 .0
                 .iter()
@@ -355,7 +366,7 @@ impl Judge {
         })
     }
 
-    pub fn update(&mut self, res: &mut Resource, chart: &mut Chart, bad_notes: &mut Vec<BadNote>) {
+    pub fn update(&mut self, res: &mut Resource, chart: &mut Chart, bad_notes: &mut Vec<BadNote>, angle: f32) {
         if res.config.autoplay() {
             self.auto_play_update(res, chart);
             return;
@@ -401,7 +412,7 @@ impl Judge {
                     time: f64::NEG_INFINITY,
                 });
             }
-            let tr = Self::touch_transform(res.config.flip_x(), res.config.chart_ratio);
+            let tr = Self::touch_transform(res.config.flip_x(), res.config.chart_ratio, angle);
             touches
                 .into_iter()
                 .map(|mut it| {

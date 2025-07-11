@@ -28,11 +28,15 @@ use phire::{
     scene::{show_error, show_message},
     time::TimeManager,
     ui::{FontArc, TextPainter},
+    gyro::{GYRO, GYROSCOPE_DATA},
     Main,
 };
 use scene::MainScene;
 use std::sync::{mpsc, Mutex};
-use tracing::{error, info};
+use std::time::Instant;
+use nalgebra::{UnitQuaternion, Vector3};
+use tracing::{error, debug, info};
+use phire::gyro::{GyroData};
 
 static MESSAGES_TX: Mutex<Option<mpsc::Sender<bool>>> = Mutex::new(None);
 static MESSAGES_TX_FOUCUS_PAUSE: Mutex<Option<mpsc::Sender<bool>>> = Mutex::new(None);
@@ -40,7 +44,6 @@ static AA_TX: Mutex<Option<mpsc::Sender<i32>>> = Mutex::new(None);
 static DATA_PATH: Mutex<Option<String>> = Mutex::new(None);
 static CACHE_DIR: Mutex<Option<String>> = Mutex::new(None);
 pub static mut DATA: Option<Data> = None;
-pub static GYRO: Mutex<Vec3> = Mutex::new(Vec3::new(0.0, 0.0, 0.0));
 
 #[cfg(feature = "closed")]
 pub async fn load_res(name: &str) -> Vec<u8> {
@@ -467,16 +470,33 @@ pub unsafe extern "C" fn Java_quad_1native_QuadNative_antiAddictionCallback(
 
 #[cfg(target_os = "android")]
 #[no_mangle]
-pub unsafe extern "C" fn Java_quad_1native_QuadNative_updateGyro(
+pub unsafe extern "C" fn Java_quad_1native_QuadNative_updateGyroScope(
     env: ndk_sys::JNIEnv,
     _class: ndk_sys::jclass,
     x: ndk_sys::jfloat,
     y: ndk_sys::jfloat,
     z: ndk_sys::jfloat,
 ) {
-    if let mut gyro = GYRO.lock().unwrap() {
-        gyro.x = x as f32;
-        gyro.y = y as f32;
-        gyro.z = z as f32;
+    let set_gyro_data = GyroData {
+        angular_velocity: Vector3::new(x, y, z),
+        timestamp: Instant::now(),
+    };
+    if let mut gyro_data = GYROSCOPE_DATA.lock().unwrap() {
+        *gyro_data = set_gyro_data;
+    }
+    GYRO.lock().unwrap().update_gyroscope(set_gyro_data);
+}
+
+#[cfg(target_os = "android")]
+#[no_mangle]
+pub unsafe extern "C" fn Java_quad_1native_QuadNative_updateGravity(
+    env: ndk_sys::JNIEnv,
+    _class: ndk_sys::jclass,
+    roll: ndk_sys::jfloat,
+    pitch: ndk_sys::jfloat,
+    yaw: ndk_sys::jfloat,
+) {
+    if let mut gyro_data = GYRO.lock().unwrap() {
+        gyro_data.update_gravity(Vector3::new(roll, pitch, yaw));
     }
 }

@@ -550,7 +550,7 @@ impl ChartList {
             dc_pause_btn: DRectButton::new(),
             dhint_btn: DRectButton::new(),
             opt_btn: DRectButton::new(),
-            speed_slider: Slider::new(0.5..2., 0.05),
+            speed_slider: Slider::new(0.1..2.0, 0.05),
             size_slider: Slider::new(0.8..1.2, 0.005),
         }
     }
@@ -643,6 +643,8 @@ struct OtherList {
     combo_btn: DRectButton,
     roman_btn: DRectButton,
     chinese_btn: DRectButton,
+    rotation_mode: DRectButton,
+    rotation_flat_mode: DRectButton,
 }
 
 impl OtherList {
@@ -657,6 +659,8 @@ impl OtherList {
             combo_btn: DRectButton::new(),
             roman_btn: DRectButton::new(),
             chinese_btn: DRectButton::new(),
+            rotation_mode: DRectButton::new(),
+            rotation_flat_mode: DRectButton::new(),
         }
     }
 
@@ -702,6 +706,20 @@ impl OtherList {
             config.chinese ^= true;
             if config.chinese && config.chinese == config.roman {
                 config.roman = !config.chinese;
+            }
+            return Ok(Some(true));
+        }
+        if self.rotation_mode.touch(touch, t) {
+            config.rotation_mode ^= true;
+            if !config.rotation_mode && config.rotation_flat_mode {
+                config.rotation_flat_mode = false;
+            }
+            return Ok(Some(true));
+        }
+        if self.rotation_flat_mode.touch(touch, t) {
+            config.rotation_flat_mode ^= true;
+            if config.rotation_flat_mode && !config.rotation_mode {
+                config.rotation_mode = true;
             }
             return Ok(Some(true));
         }
@@ -782,6 +800,14 @@ impl OtherList {
         item! {
             render_title(ui, c, tl!("item-chinese"), None);
             render_switch(ui, rr, t, c, &mut self.chinese_btn, config.chinese);
+        }
+        item! {
+            render_title(ui, c, tl!("item-rotation-mode"), None);
+            render_switch(ui, rr, t, c, &mut self.rotation_mode, config.rotation_mode);
+        }
+        item! {
+            render_title(ui, c, tl!("item-rotation-flat-mode"), Some(tl!("item-rotation-flat-mode-sub")));
+            render_switch(ui, rr, t, c, &mut self.rotation_flat_mode, config.rotation_flat_mode);
         }
         (w, h)
     }
