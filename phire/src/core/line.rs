@@ -143,6 +143,7 @@ pub struct JudgeLine {
     pub notes: Vec<Note>,
     pub color: Anim<Color>,
     pub parent: Option<usize>,
+    pub rotate_with_parent: bool,
     pub z_index: i32,
     pub show_below: bool,
     pub attach_ui: Option<UIElement>,
@@ -206,26 +207,35 @@ impl JudgeLine {
         });
     }
 
-    pub fn fetch_pos(line: &JudgeLine, res: &Resource, lines: &[JudgeLine]) -> Vector {
-        if let Some(parent) = line.parent {
-            let parent = &lines[parent];
-            let mut parent_translation = Self::fetch_pos(parent, res, lines);
-            parent_translation += Rotation2::new(parent.object.rotation.now().to_radians()) * line.object.now_translation(res);
-            return parent_translation;
+    pub fn fetch_pos(&self, res: &Resource, lines: &[JudgeLine]) -> Vector {
+        let current_translation = self.object.now_translation(res);
+        let current_rotate = Rotation2::new(self.object.rotation.now().to_radians());
+        if self.rotate_with_parent {
+            if let Some(parent) = self.parent {
+                let parent = &lines[parent];
+                let parent_rotate = Rotation2::new(parent.object.rotation.now().to_radians());
+                current_rotate * (parent.fetch_pos(res, lines) + current_translation)
+            } else {
+                current_rotate * current_translation
+            }
+            
+        } else {
+            if let Some(parent) = self.parent {
+                let parent = &lines[parent];
+                let parent_rotate = Rotation2::new(parent.object.rotation.now().to_radians());
+                parent.fetch_pos(res, lines) + parent_rotate * current_translation
+            } else {
+                current_translation
+            }
         }
-        line.object.now_translation(res)
     }
 
     pub fn now_transform(&self, res: &Resource, lines: &[JudgeLine]) -> Matrix {
-        /*if let Some(parent) = self.parent {
-            let po = &lines[parent].object;
-            let mut tr = Rotation2::new(po.rotation.now().to_radians()) * self.object.now_translation(res);
-            tr += po.now_translation(res);
-            self.object.now_rotation().append_translation(&tr)
+        if self.rotate_with_parent {
+            Matrix::new_translation(&self.fetch_pos(res, lines))
         } else {
-            self.object.now(res)
-        }*/
-            self.object.now_rotation().append_translation(&Self::fetch_pos(self, res, lines))
+            self.object.now_rotation().append_translation(&self.fetch_pos(res, lines))
+        }
     }
 
     pub fn render(&self, ui: &mut Ui, res: &mut Resource, lines: &[JudgeLine], bpm_list: &mut BpmList, settings: &ChartSettings, id: usize) {

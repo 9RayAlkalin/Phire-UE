@@ -172,6 +172,7 @@ fn parse_judge_line(mut pec: PECJudgeLine, id: usize, max_time: f32) -> Result<J
         notes: pec.notes,
         color: Anim::default(),
         parent: None,
+        rotate_with_parent: false,
         anchor: [0.5, 0.5],
         z_index: 0,
         show_below: false,

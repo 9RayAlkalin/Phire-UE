@@ -69,16 +69,23 @@ impl Object {
         Matrix::identity().append_nonuniform_scaling(&self.scale.now_with_def(1.0, 1.0))
     }
 
-    pub fn now_scale_fix(&self, scale_point: Vector) -> Matrix {
+    pub fn now_scale_wrt_point(&self, scale_point: Vector) -> Matrix {
         let scale = self.scale.now_with_def(1.0, 1.0);
         Matrix::new_translation(&-scale_point).append_nonuniform_scaling(&scale).append_translation(&scale_point)
     }
 
-    pub fn new_rotation_wrt_point(&self, angle: f32, pt: Vector) -> Matrix {
+    pub fn new_rotation_wrt_point(angle: f32, pt: Vector) -> Matrix {
         let rot = Rotation2::new(angle);
         let translation_back = Matrix::new_translation(&pt);
         let translation_to = Matrix::new_translation(&-pt);
         translation_back * rot.to_homogeneous() * translation_to
+    }
+
+    pub fn new_translation_wrt_point(translation: Vector, pt: Vector) -> Matrix {
+        let translation_back = Matrix::new_translation(&pt);
+        let translation_to = Matrix::new_translation(&-pt);
+        let translation = Matrix::new_translation(&translation);
+        translation_back * translation * translation_to
     }
 }
 
