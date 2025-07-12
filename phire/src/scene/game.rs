@@ -1141,7 +1141,7 @@ impl Scene for GameScene {
             (time - self.offset()).max(0.)
         };
         self.res.time = time;
-        if !tm.paused() /*&& self.pause_rewind.is_none()*/ && self.mode != GameMode::View {
+        if !tm.paused() && (self.res.config.autoplay() || self.pause_rewind.time.is_none()) && self.mode != GameMode::View {
             self.gl.quad_gl.viewport(self.res.camera.viewport);
 
             let angle = GYRO.lock().unwrap().get_angle(&self.res.config);
