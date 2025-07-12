@@ -4,7 +4,7 @@ use crate::{
     ext::{create_audio_manger, nalgebra_to_glm, SafeTexture},
     fs::FileSystem,
     info::{ChartFormat, ChartInfo},
-    particle::{AtlasConfig, ColorCurve, Emitter, EmitterConfig},
+    particle::{AtlasConfig, ColorCurve, Emitter, EmitterConfig, ParticleShape},
 };
 use anyhow::{bail, Context, Result};
 use macroquad::prelude::*;
@@ -68,6 +68,8 @@ pub struct ResPackInfo {
     pub hit_fx_rotate: bool,
     #[serde(default)]
     pub hide_particles: bool,
+    #[serde(default)]
+    pub circle_particles: bool,
     #[serde(default = "default_tinted")]
     pub hit_fx_tinted: bool,
     #[serde(default = "default_tinted")]
@@ -305,6 +307,11 @@ impl ParticleEmitter {
             colors_curve,
             ..Default::default()
         };
+        let shape = if res_pack.info.circle_particles {
+            ParticleShape::Circle { subdivisions: 16 }
+        } else {
+            ParticleShape::Rectangle { aspect_ratio: 1.0 }
+        };
         let emitter_square_config = EmitterConfig {
             max_particles: config.max_particles,
             local_coords: false,
@@ -316,6 +323,7 @@ impl ParticleEmitter {
             initial_velocity: 3.3 * scale,
             initial_velocity_randomness: 0.3  * scale,
             linear_accel: -7.0,
+            shape,
             colors_curve,
             ..Default::default()
         };
