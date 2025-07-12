@@ -18,7 +18,7 @@ const BAD_TIME: f32 = 0.5;
 #[derive(Clone, Debug)]
 pub enum NoteKind {
     Click,
-    Hold { end_time: f32, end_height: f32, end_speed: f32 },
+    Hold { end_time: f32, end_height: f32, end_speed: Option<f32> },
     Flick,
     Drag,
 }
@@ -239,9 +239,8 @@ impl Note {
             height + self.object.translation.1.now() - line_height
         } else {
             match self.kind {
-                NoteKind::Hold { end_time: _,  end_height, end_speed } => {
-                    let end_spd = end_speed * ctrl_obj.y.now_opt().unwrap_or(1.);
-                    let end_height = end_height / res.aspect_ratio * end_spd;
+                NoteKind::Hold { end_time: _,  end_height, end_speed: _ } => {
+                    let end_height = end_height / res.aspect_ratio;
                     end_height + self.object.translation.1.now() - line_height
                 }
                 _ => {
@@ -332,14 +331,6 @@ impl Note {
                     if res.time >= end_time {
                         return;
                     }
-                    let end_spd = end_speed * ctrl_obj.y.now_opt().unwrap_or(1.);
-                    if matches!(res.chart_format, ChartFormat::Pgr) && end_spd == 0. {
-                        if res.config.chart_debug_note > 0. {
-                            color.a *= 0.2;
-                        } else {
-                            return;
-                        }
-                    }
 
                     let end_height = end_height / res.aspect_ratio * spd;
                     let time = if res.time >= self.time {res.time} else {self.time};
@@ -349,7 +340,16 @@ impl Note {
 
                     let h = if self.time <= res.time { line_height } else { height };
                     let bottom = h - line_height; //StartY
-                    let top = if matches!(res.chart_format, ChartFormat::Pgr) {
+                    let top = if let Some(end_spd) = end_speed {
+                        let end_spd = end_spd * ctrl_obj.y.now_opt().unwrap_or(1.);
+                        if end_spd == 0. {
+                            if res.config.chart_debug_note > 0. {
+                                color.a *= 0.2;
+                            } else {
+                                return;
+                            }
+                        }
+
                         let hold_height = end_height - height;
                         let hold_line_height = (time - self.time) * end_spd / res.aspect_ratio / HEIGHT_RATIO;
                         bottom + hold_height - hold_line_height
@@ -462,10 +462,14 @@ impl Note {
                     if res.time >= end_time {
                         return;
                     }
-                    let speed = if self.speed == 1. && end_speed == 1. {
+                    let speed = if self.speed == 1.0 && end_speed.is_none() {
                         String::new()
                     } else {
-                        format!(" v: {}({})", self.speed, end_speed)
+                        let end_spd = match end_speed {
+                            Some(spd) => format!("({})", spd),
+                            None => "".to_string(),
+                        };
+                        format!(" v: {}{}", self.speed, end_spd)
                     };
                     res.with_model(self.now_transform(res, ctrl_obj, bottom, config.incline_sin), |res: &mut Resource| {
                         res.with_model(Matrix::new_nonuniform_scaling(&Vector::new(1.0, if self.above { -1.0 } else { 1.0 })), |res: &mut Resource| {

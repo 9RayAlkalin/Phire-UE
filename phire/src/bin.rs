@@ -228,6 +228,31 @@ impl<T: BinaryData> BinaryData for Keyframe<T> {
     }
 }
 
+impl<T: BinaryData> BinaryData for Option<T> {
+    fn read_binary<R: Read>(r: &mut BinaryReader<R>) -> Result<Self> {
+        if bool::read_binary(r)? {
+            let value = T::read_binary(r)?;
+            Ok(Some(value))
+        } else {
+            Ok(None)
+        }
+    }
+
+    fn write_binary<W: Write>(&self, w: &mut BinaryWriter<W>) -> Result<()> {
+        match self {
+            Some(value) => {
+                true.write_binary(w)?;
+                value.write_binary(w)?;
+            }
+            None => {
+                false.write_binary(w)?;
+            }
+        }
+        Ok(())
+    }
+}
+
+
 fn read_opt<R: Read, T: BinaryData + Tweenable>(r: &mut BinaryReader<R>) -> Result<Option<Box<Anim<T>>>> {
     Ok(match r.read::<u8>()? {
         0 => None,
@@ -321,7 +346,7 @@ impl BinaryData for Note {
             1 => NoteKind::Hold {
                 end_time: r.read()?,
                 end_height: r.read()?,
-                end_speed: if r.read()? { r.read::<f32>()? } else { 1. },
+                end_speed: r.read()?,
             },
             2 => NoteKind::Flick,
             3 => NoteKind::Drag,
