@@ -164,6 +164,39 @@ impl BinaryData for f32 {
     }
 }
 
+impl BinaryData for u32 {
+    fn read_binary<R: Read>(r: &mut BinaryReader<R>) -> Result<Self> {
+        Ok(r.0.read_u32::<LE>()?)
+    }
+
+    fn write_binary<W: Write>(&self, w: &mut BinaryWriter<W>) -> Result<()> {
+        Ok(w.0.write_u32::<LE>(*self)?)
+    }
+}
+
+impl BinaryData for u64 {
+    fn read_binary<R: Read>(r: &mut BinaryReader<R>) -> Result<Self> {
+        Ok(r.0.read_u64::<LE>()?)
+    }
+
+    fn write_binary<W: Write>(&self, w: &mut BinaryWriter<W>) -> Result<()> {
+        Ok(w.0.write_u64::<LE>(*self)?)
+    }
+}
+
+impl BinaryData for usize {
+    fn read_binary<R: Read>(r: &mut BinaryReader<R>) -> Result<Self> {
+        let value = u64::read_binary(r)? as usize;
+        Ok(value)
+    }
+
+    fn write_binary<W: Write>(&self, w: &mut BinaryWriter<W>) -> Result<()> {
+        let value = *self as u64;
+        value.write_binary(w)?;
+        Ok(())
+    }
+}
+
 impl BinaryData for String {
     fn read_binary<R: Read>(r: &mut BinaryReader<R>) -> Result<Self> {
         Ok(String::from_utf8(r.array()?)?)
@@ -411,17 +444,16 @@ impl BinaryData for JudgeLine {
         let height = r.read()?;
         let mut notes = r.array()?;
         let color = r.read()?;
-        let parent = match r.uleb()? {
-            0 => None,
-            x => Some(x as usize - 1),
-        };
+        let parent = r.read()?;
+        let rotate_with_parent = r.read()?;
         let anchor = r.read()?;
         let show_below = r.read()?;
-        let cache = JudgeLineCache::new(&mut notes);
         let attach_ui = UIElement::from_u8(r.read()?);
         let ctrl_obj = RefCell::new(r.read()?);
         let incline = r.read()?;
         let z_index = r.read()?;
+
+        let cache = JudgeLineCache::new(&mut notes);
         Ok(Self {
             object,
             kind,
@@ -429,6 +461,7 @@ impl BinaryData for JudgeLine {
             notes,
             color,
             parent,
+            rotate_with_parent,
             anchor,
             show_below,
 
@@ -464,10 +497,9 @@ impl BinaryData for JudgeLine {
         w.write(&self.height)?;
         w.array(&self.notes)?;
         w.write(&self.color)?;
-        w.uleb(match self.parent {
-            None => 0,
-            Some(index) => index as u64 + 1,
-        })?;
+        w.write(&self.parent)?;
+        w.write(&self.rotate_with_parent)?;
+        w.write(&self.anchor)?;
         w.write_val(self.show_below)?;
         w.write_val(self.attach_ui.map_or(0, |it| it as u8))?;
         w.write(self.ctrl_obj.borrow().deref())?;
