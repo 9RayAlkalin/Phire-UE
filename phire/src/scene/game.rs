@@ -356,8 +356,8 @@ impl GameScene {
         match mode {
             GameMode::TweakOffset => {
                 config.mods.insert(Mods::AUTOPLAY);
-                config.volume_music = config.volume_music.max(0.25);
-                config.volume_sfx = config.volume_sfx.max(0.25);
+                config.volume_music = config.volume_music.max(0.5);
+                config.volume_sfx = config.volume_sfx.max(0.5);
             }
             _ => {}
         }
