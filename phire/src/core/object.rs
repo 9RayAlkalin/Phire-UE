@@ -74,17 +74,15 @@ impl Object {
         Matrix::new_translation(&-scale_point).append_nonuniform_scaling(&scale).append_translation(&scale_point)
     }
 
-    pub fn new_rotation_wrt_point(angle: f32, pt: Vector) -> Matrix {
-        let rot = Rotation2::new(angle);
+    pub fn new_rotation_wrt_point(rot: Rotation2<f32>, pt: Vector) -> Matrix {
         let translation_back = Matrix::new_translation(&pt);
         let translation_to = Matrix::new_translation(&-pt);
         translation_back * rot.to_homogeneous() * translation_to
     }
 
-    pub fn new_translation_wrt_point(translation: Vector, pt: Vector) -> Matrix {
+    pub fn new_translation_wrt_point(translation: Matrix, pt: Vector) -> Matrix {
         let translation_back = Matrix::new_translation(&pt);
         let translation_to = Matrix::new_translation(&-pt);
-        let translation = Matrix::new_translation(&translation);
         translation_back * translation * translation_to
     }
 }

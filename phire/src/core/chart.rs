@@ -65,18 +65,12 @@ impl Chart {
             let lines = &self.lines;
             let line = &lines[id];
             let obj = &line.object;
-            let translation = if true {
-                let mut tr = line.fetch_pos(res, lines);
-                let sc = obj.now_scale_wrt_point(scale_point.map_or_else(|| Vector::default(), |(x, y)| Vector::new(x, y)));
-                tr.y *= -res.aspect_ratio;
-                tr.x *= res.aspect_ratio;
-                Object::new_translation_wrt_point(tr, scale_point.map_or_else(|| Vector::default(), |(x, y)| Vector::new(x, y))) * sc
-            } else {
+            let translation = {
                 let mut tr = line.fetch_pos(res, lines);
                 tr.y *= -res.aspect_ratio;
                 tr.x *= res.aspect_ratio;
                 let sc = obj.now_scale_wrt_point(scale_point.map_or_else(|| Vector::default(), |(x, y)| Vector::new(x, y)));
-                let ro = Object::new_rotation_wrt_point(-obj.rotation.now().to_radians(), rotation_point.map_or_else(|| Vector::default(), |(x, y)| Vector::new(x, y)));
+                let ro = Object::new_translation_wrt_point(line.fetch_rotate(res, &lines), rotation_point.map_or_else(|| Vector::default(), |(x, y)| Vector::new(x, y)));
                 Matrix::new_translation(&tr) * ro * sc
             };
             let mut color = self.lines[id].color.now_opt().unwrap_or(WHITE);
