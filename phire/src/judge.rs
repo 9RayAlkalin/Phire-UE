@@ -11,7 +11,6 @@ use miniquad::{EventHandler, MouseButton};
 use once_cell::sync::Lazy;
 use sasa::{PlaySfxParams, Sfx};
 use serde::Serialize;
-use tracing::debug;
 use std::{cell::RefCell, collections::HashMap, num::FpCategory};
 
 pub const FLICK_SPEED_THRESHOLD: f32 = 0.8;
@@ -20,6 +19,7 @@ pub const LIMIT_GOOD: f32 = 0.18;
 pub const LIMIT_BAD: f32 = 0.22;
 pub const UP_TOLERANCE: f32 = 0.05;
 pub const DIST_FACTOR: f32 = 0.2;
+const LATE_OFFSET: f32 = 0.07;
 
 pub fn play_sfx(sfx: &mut Sfx, config: &Config) {
     if config.volume_sfx <= 1e-2 {
@@ -547,8 +547,8 @@ impl Judge {
                     if dist > x_diff_max {
                         continue;
                     }
-                    if dt.abs()
-                        > if matches!(note.kind, NoteKind::Click) {
+                    if dt.abs() >
+                        if matches!(note.kind, NoteKind::Click) {
                             LIMIT_BAD // LIMIT_BAD - LIMIT_PERFECT * (dist - 0.9).max(0.)
                         } else {
                             LIMIT_GOOD
@@ -559,13 +559,18 @@ impl Judge {
                     let dist_key = if res.config.full_scrrn_judge() {
                         (dist / NOTE_WIDTH_RATIO_BASE).max(0.) * 0.02
                     } else {
-                        (dist / NOTE_WIDTH_RATIO_BASE - 1.).max(0.) * DIST_FACTOR
+                        (dist / NOTE_WIDTH_RATIO_BASE).max(0.) * DIST_FACTOR
                     };
-                    let key = if matches!(note.kind, NoteKind::Flick | NoteKind::Drag) {
-                        dt.abs().max(LIMIT_GOOD) + dist_key
-                    } else {
-                        dt.abs() + dist_key
-                    };
+                    let key = dist_key +
+                        if matches!(note.kind, NoteKind::Flick | NoteKind::Drag) {
+                            dt.abs().max(LIMIT_GOOD)
+                        } else {
+                            if dt < 0.0 {
+                                (dt + LATE_OFFSET).min(0.0).abs()
+                            } else {
+                                dt.abs()
+                            }
+                        };
                     if key < closest.3 {
                         closest = (Some((line_id, *id)), dist, dt, key, posx);
                     }
