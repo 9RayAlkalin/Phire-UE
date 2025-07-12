@@ -673,7 +673,7 @@ impl GameScene {
             ui.fill_circle(pos.0, pos.1, 0.04, Color { a: 0.4, ..BLUE });
         }
         if tm.paused() {
-            let o = if self.mode == GameMode::Exercise { -0.3 } else { 0. };
+            let o = if matches!(self.mode, GameMode::Exercise | GameMode::TweakOffset) { -0.3 } else { 0. };
             let s = 0.06;
             let w = 0.05;
             let no_retry = self.mode == GameMode::NoRetry;
@@ -774,7 +774,7 @@ impl GameScene {
                     _ => {}
                 }
             }
-            if self.mode == GameMode::Exercise {
+            if matches!(self.mode, GameMode::Exercise | GameMode::TweakOffset) {
                 let asp = self.touch_scale();
                 for touch in ui.ensure_touches() {
                     touch.position *= asp;
