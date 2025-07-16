@@ -517,7 +517,7 @@ impl Scene for EndingScene {
             0.10
         );
         let r = draw_illustration(*self.player, 1. - 0.21, main.center().y, 0.12 / (0.076 * 7.), 0.12 / (0.076 * 7.), color, true);
-        let mut text = ui.text(&self.player_name).pos(r.x - 0.015, r.center().y).anchor(1., 0.5).size(0.54).color(color);
+        let mut text = ui.text(&self.player_name).pos(r.x - 0.015, r.center().y - 0.002).anchor(1., 0.5).size(0.54).color(color);
         let text_rect = text.measure();
         draw_parallelogram(
             Rect::new(text_rect.x - main.h * slope - 0.02, main.y, r.x - text_rect.x + main.h * slope * 2. + 0.021, main.h),
