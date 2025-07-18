@@ -19,6 +19,7 @@ pub const LIMIT_GOOD: f32 = 0.18;
 pub const LIMIT_BAD: f32 = 0.22;
 pub const UP_TOLERANCE: f32 = 0.05;
 pub const DIST_FACTOR: f32 = 0.2;
+const LATE_OFFSET: f32 = 0.13;
 
 pub fn play_sfx(sfx: &mut Sfx, config: &Config) {
     if config.volume_sfx <= 1e-2 {
@@ -560,12 +561,14 @@ impl Judge {
                     } else {
                         (dist / NOTE_WIDTH_RATIO_BASE).max(0.) * DIST_FACTOR
                     };
-                    let key = if matches!(note.kind, NoteKind::Flick | NoteKind::Drag) {
-                        dt.abs().max(LIMIT_GOOD)
+                    let key = if matches!(note.kind, NoteKind::Flick | NoteKind::Drag) { // Low Priority
+                        dt.abs() + LIMIT_BAD
                     } else if dt < -LIMIT_GOOD { // Prevent Late Bad
                         dt.abs()
+                    } else if dt < 0.0 {
+                        (dt + LATE_OFFSET).min(0.0).abs() // Protect Late Good
                     } else {
-                        (dt + LIMIT_GOOD).abs() // Protect Late Good
+                        dt.abs()
                     };
                     let key = key + dist_key;
                     if key < closest.3 {
