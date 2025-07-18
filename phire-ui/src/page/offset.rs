@@ -174,7 +174,7 @@ impl Page for OffsetPage {
             r.x = lf;
             ui.fill_path(&r.rounded(0.00), semi_black(c.a * 0.4));
             let ct = r.center();
-            let hw = 0.3;
+            let hw = 0.3 * aspect * 1.7777777;
             let hh = 0.0075;
             ui.fill_rect(Rect::new(0.0 - hh / 2., ct.y - aspect * 0.4 - hw / 2., hh, hw), c);
 
