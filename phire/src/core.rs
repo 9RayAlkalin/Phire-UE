@@ -92,10 +92,11 @@ impl BpmList {
         BpmList { elements, cursor: 0 }
     }
 
-    pub fn new_time(ranges: Vec<(f32, f32)> /*(time, bpm)*/) -> Self {
+    // compatible pgr
+    pub fn form_time(ranges: Vec<(f32, f32)> /*(time/index, bpm)*/) -> Self {
         let mut elements = Vec::new();
         for (time, bpm) in ranges {
-            elements.push((time, time, bpm));
+            elements.push((0.0, time, bpm));
         }
         BpmList { elements, cursor: 0 }
     }
@@ -142,7 +143,6 @@ impl BpmList {
         while self.cursor != 0 && self.elements[self.cursor].1 > time {
             self.cursor -= 1;
         }
-        let (_, _, bpm) = &self.elements[self.cursor];
-        *bpm
+        self.elements[self.cursor].2
     }
 }
