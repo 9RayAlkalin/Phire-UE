@@ -56,7 +56,6 @@ impl OffsetPage {
         let respack = ResourcePack::from_path(get_data().config.res_pack_path.as_ref())
             .await
             .context("Failed to load resource pack")?;
-        let click = respack.note_style.click.clone();
         let emitter = ParticleEmitter::new(&respack, get_data().config.note_scale, respack.info.hide_particles, None)?;
 
         let frame_times: VecDeque<f64> = VecDeque::new();
@@ -68,9 +67,6 @@ impl OffsetPage {
             cali_hit,
 
             tm,
-            cali_last: false,
-
-            click,
             _hit_fx: respack.hit_fx,
             emitter,
             color: respack.info.fx_perfect(),
