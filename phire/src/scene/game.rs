@@ -511,21 +511,21 @@ impl GameScene {
         else {
             format!("{:07}", self.judge.score())
         };
-        let score_top = top + eps * 2.2 - (1. - p) * 0.4;
-        let ct = ui.text(&score).size(0.8 * aspect_ratio).center();
+        let score_top = top + eps * 2.8125 - (1. - p) * 0.4;
+        let score_right = aspect_ratio - margin + 0.001;
         ui.text("AA").color(Color::new(0., 0., 0., 0.)).draw(); //Fix first text disappear
-        self.chart.with_element(ui, res, UIElement::Score, Some((-ct.x + aspect_ratio - margin, ct.y + score_top)), Some((aspect_ratio - margin + 0.001, top + eps * 2.8125)), |ui, color| {
-            let mut text_size = 0.71 * scale_ratio;
-            let mut text = ui.text(&score).size(text_size);
-            let max_width = 0.55 * aspect_ratio;
-            let text_width = text.measure().w;
-            if text_width > max_width {
-                text_size *= max_width / text_width
-            }
-            drop(text);
+        let mut text_size = 0.71 * scale_ratio;
+        let mut text = ui.text(&score).size(text_size);
+        let max_width = 0.55 * aspect_ratio;
+        let text_width = text.measure().w;
+        if text_width > max_width {
+            text_size *= max_width / text_width
+        }
+        let ct = text.size(text_size).measure().center();
+        self.chart.with_element(ui, res, UIElement::Score, Some((score_right - ct.x, score_top + ct.y)), Some((score_right, score_top)), |ui, color| {
             if res.config.render_ui_score {
                 ui.text(score)
-                    .pos(aspect_ratio - margin + 0.001, top + eps * 2.8125 - (1. - p) * 0.4)
+                    .pos(score_right, score_top)
                     .anchor(1., 0.)
                     .size(text_size)
                     .color(Color { a: color.a * c.a, ..color })
@@ -570,8 +570,8 @@ impl GameScene {
                 let mut text = ui.text(&combo)
                     .size(text_size)
                     .color(Color::new(0., 0., 0., 0.))
-                    .pos(0., combo_y)
-                    .anchor(0.5, 0.);
+                    .pos(0., combo_y + unit_h / 2. * 0.98)
+                    .anchor(0.5, 0.5);
                 let text_width = text.measure().w;
                 let text_btm = text.draw().bottom();
                 if text_width > max_width {
@@ -606,15 +606,15 @@ impl GameScene {
         let lf = -aspect_ratio + margin;
         let bt = -top - eps * 3.5;
         if res.config.render_ui_name {
+            let mut text_size = 0.505 * scale_ratio;
+            let mut text = ui.text(&res.info.name).size(text_size);
+            let max_width = 0.9 * aspect_ratio;
+            let text_width = text.measure().w;
+            if text_width > max_width {
+                text_size *= max_width / text_width
+            }
+            let ct = text.size(text_size).measure().center();
             self.chart.with_element(ui, res, UIElement::Name, Some((lf + ct.x, bt - ct.y)), Some((lf, -top - eps * 2.)), |ui, color| {
-                let mut text_size = 0.505 * scale_ratio;
-                let mut text = ui.text(&res.info.name).size(text_size);
-                let max_width = 0.9 * aspect_ratio;
-                let text_width = text.measure().w;
-                if text_width > max_width {
-                    text_size *= max_width / text_width
-                }
-                drop(text);
                 ui.text(&res.info.name)
                     .pos(lf, bt + (1. - p) * 0.4)
                     .anchor(0., 1.)
@@ -624,6 +624,14 @@ impl GameScene {
             });
         }
         if res.config.render_ui_level {
+            let mut text_size = 0.505 * scale_ratio;
+            let mut text = ui.text(&res.info.level).size(text_size);
+            let max_width = 0.9 * aspect_ratio;
+            let text_width = text.measure().w;
+            if text_width > max_width {
+                text_size *= max_width / text_width
+            }
+            let ct = text.size(text_size).measure().center();
             self.chart.with_element(ui, res, UIElement::Level, Some((-lf - ct.x, bt - ct.y)), Some((-lf, -top - eps * 2.)), |ui, color| {
                 ui.text(&res.info.level)
                     .pos(-lf, bt + (1. - p) * 0.4)
