@@ -559,7 +559,7 @@ impl Judge {
                     let dist_key = if res.config.full_scrrn_judge() {
                         (dist / NOTE_WIDTH_RATIO_BASE).max(0.) * 0.02
                     } else {
-                        (dist / NOTE_WIDTH_RATIO_BASE).max(0.) * DIST_FACTOR
+                        (dist / NOTE_WIDTH_RATIO_BASE - 1.).max(0.) * DIST_FACTOR
                     };
                     let key = if matches!(note.kind, NoteKind::Flick | NoteKind::Drag) { // Low Priority
                         dt.abs() + LIMIT_BAD
@@ -612,6 +612,7 @@ impl Judge {
                     let note = &mut lines[line_id].notes[id as usize];
                     let dt = dt.abs();
                     if matches!(note.kind, NoteKind::Flick) {
+                        // debug!("reject by flick");
                         continue; // to next loop
                     }
                     if dt <= LIMIT_GOOD || matches!(note.kind, NoteKind::Hold { .. }) {
