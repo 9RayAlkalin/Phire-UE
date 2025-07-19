@@ -6,7 +6,6 @@ use crate::{get_data, get_data_mut, save_data};
 use anyhow::{Context, Result};
 use macroquad::prelude::*;
 use phire::{
-    config::Config,
     core::ResourcePack,
     ext::{create_audio_manger, get_latency, push_frame_time, screen_aspect, semi_black, RectExt},
     time::TimeManager,
@@ -15,7 +14,6 @@ use phire::{
 use sasa::{AudioClip, AudioManager, Music, MusicParams, PlaySfxParams, Sfx};
 
 pub struct OffsetPage {
-    config: Config,
     audio: AudioManager,
     cali: Music,
     cali_hit: Sfx,
@@ -36,7 +34,7 @@ impl OffsetPage {
     const FADE_TIME: f32 = 0.8;
 
     pub async fn new() -> Result<Self> {
-        let config = get_data().config.clone();
+        let config = &get_data().config;
         let mut audio = create_audio_manger(&get_data().config)?;
         let cali = audio.create_music(
             AudioClip::new(load_file("cali.ogg").await?)?,
@@ -58,7 +56,6 @@ impl OffsetPage {
         let frame_times: VecDeque<f64> = VecDeque::new();
         let latency_record: VecDeque<f32> = VecDeque::new();
         Ok(Self {
-            config,
             audio,
             cali,
             cali_hit,
@@ -160,6 +157,7 @@ impl Page for OffsetPage {
     fn render(&mut self, ui: &mut Ui, s: &mut SharedState) -> Result<()> {
         let t = s.t;
         let aspect = 1. / screen_aspect();
+        let config = &get_data().config;
         s.render_fader(ui, |ui, c| {
             let lf = -0.97;
             let mut r = ui.content_rect();
@@ -173,9 +171,9 @@ impl Page for OffsetPage {
 
             let ot = t;
 
-            let mut t = self.tm.now() as f32 - self.config.offset;
+            let mut t = self.tm.now() as f32 - config.offset;
 
-            if self.config.adjust_time {
+            if config.adjust_time {
                 let latency = get_latency(&self.audio, &self.frame_times);
                 t -= latency;
                 ui.text(format!("{} {:.0}ms", tl!("estimated"), latency * 1000.))
@@ -203,7 +201,7 @@ impl Page for OffsetPage {
                 }
                 self.touched = false;
                 self.cali_hit.play(PlaySfxParams {
-                    amplifier: self.config.volume_sfx,
+                    amplifier: config.volume_sfx,
                 }).unwrap();
             }
 
@@ -242,11 +240,11 @@ impl Page for OffsetPage {
                 .color(Color::new(1., 1., 1., 0.8 * c.a))
                 .draw();
 
-            let offset = self.config.offset * 1000.;
+            let offset = config.offset * 1000.;
             self.slider
                 .render(ui, Rect::new(-0.08, ct.y + aspect * 0.1 - 0.2 / 2., 0.45, 0.2), ot, c, offset, format!("{offset:.0}ms"));
 
-            if self.config.adjust_time {
+            if config.adjust_time {
                 push_frame_time(&mut self.frame_times, self.tm.real_time());
             }
         });
