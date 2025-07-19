@@ -93,7 +93,7 @@ impl BpmList {
     }
 
     // compatible pgr
-    pub fn form_time(ranges: Vec<(f32, f32)> /*(time/index, bpm)*/) -> Self {
+    pub fn from_time(ranges: Vec<(f32, f32)> /*(time/index, bpm)*/) -> Self {
         let mut elements = Vec::new();
         for (time, bpm) in ranges {
             elements.push((0.0, time, bpm));

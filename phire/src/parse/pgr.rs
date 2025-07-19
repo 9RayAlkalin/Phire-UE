@@ -312,5 +312,5 @@ pub fn parse_phigros(source: &str, extra: ChartExtra) -> Result<Chart> {
         .collect::<Result<Vec<_>>>()?;
 
     process_lines(&mut lines);
-    Ok(Chart::new(pgr.offset, lines, BpmList::form_time(bpm_values), ChartSettings::default(), extra, HashMap::new()))
+    Ok(Chart::new(pgr.offset, lines, BpmList::from_time(bpm_values), ChartSettings::default(), extra, HashMap::new()))
 }
