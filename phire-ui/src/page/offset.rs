@@ -7,8 +7,8 @@ use anyhow::{Context, Result};
 use macroquad::prelude::*;
 use phire::{
     config::Config,
-    core::{ParticleEmitter, ResourcePack},
-    ext::{create_audio_manger, get_latency, push_frame_time, screen_aspect, semi_black, RectExt, SafeTexture},
+    core::ResourcePack,
+    ext::{create_audio_manger, get_latency, push_frame_time, screen_aspect, semi_black, RectExt},
     time::TimeManager,
     ui::{Slider, Ui}
 };
@@ -21,8 +21,6 @@ pub struct OffsetPage {
     cali_hit: Sfx,
 
     tm: TimeManager,
-    _hit_fx: SafeTexture,
-    emitter: ParticleEmitter,
     color: Color,
 
     slider: Slider,
@@ -53,10 +51,9 @@ impl OffsetPage {
         let mut tm = TimeManager::new(1., true);
         tm.force = 3e-2;
 
-        let respack = ResourcePack::from_path(get_data().config.res_pack_path.as_ref())
+        let respack = ResourcePack::from_path(config.res_pack_path.as_ref())
             .await
             .context("Failed to load resource pack")?;
-        let emitter = ParticleEmitter::new(&respack, get_data().config.note_scale, respack.info.hide_particles, None)?;
 
         let frame_times: VecDeque<f64> = VecDeque::new();
         let latency_record: VecDeque<f32> = VecDeque::new();
@@ -67,8 +64,6 @@ impl OffsetPage {
             cali_hit,
 
             tm,
-            _hit_fx: respack.hit_fx,
-            emitter,
             color: respack.info.fx_perfect(),
 
             slider: Slider::new(-200.0..800.0, 1.),
@@ -212,20 +207,6 @@ impl Page for OffsetPage {
                 }).unwrap();
             }
 
-            // if t <= 1. {
-            //     let w = NOTE_WIDTH_RATIO_BASE * config.note_scale * 2.;
-            //     let h = w * self.click.height() / self.click.width();
-            //     let r = Rect::new(0.0 - w / 2., late - h / 2., w, h);
-            //     ui.fill_rect(r, (*self.click, r, ScaleType::Fit, c));
-            //     self.cali_last = true;
-            // } else {
-            //     if self.cali_last {
-            //         let g = ui.to_global(ct);
-            //         self.emitter.emit_at(vec2(g.0, g.1), 0., self.color);
-            //     }
-            //     self.cali_last = false;
-            // }
-
             if let Some((latency, time)) = self.touch {
                 let p = (ot - time) / Self::FADE_TIME;
                 if p > 1. {
@@ -275,8 +256,6 @@ impl Page for OffsetPage {
             let value = base.log(10.0);
             value * x.signum()
         }
-
-        self.emitter.draw(get_frame_time());
 
         Ok(())
     }
