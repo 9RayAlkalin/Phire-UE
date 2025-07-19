@@ -6,22 +6,21 @@ use crate::{get_data, get_data_mut, save_data};
 use anyhow::{Context, Result};
 use macroquad::prelude::*;
 use phire::{
-    core::{ParticleEmitter, ResourcePack, NOTE_WIDTH_RATIO_BASE},
-    ext::{create_audio_manger, get_latency, push_frame_time, screen_aspect, semi_black, RectExt, SafeTexture, ScaleType},
+    config::Config,
+    core::{ParticleEmitter, ResourcePack},
+    ext::{create_audio_manger, get_latency, push_frame_time, screen_aspect, semi_black, RectExt, SafeTexture},
     time::TimeManager,
-    ui::{Slider, Ui},
+    ui::{Slider, Ui}
 };
 use sasa::{AudioClip, AudioManager, Music, MusicParams, PlaySfxParams, Sfx};
 
 pub struct OffsetPage {
+    config: Config,
     audio: AudioManager,
     cali: Music,
     cali_hit: Sfx,
 
     tm: TimeManager,
-    cali_last: bool,
-
-    click: SafeTexture,
     _hit_fx: SafeTexture,
     emitter: ParticleEmitter,
     color: Color,
@@ -39,11 +38,13 @@ impl OffsetPage {
     const FADE_TIME: f32 = 0.8;
 
     pub async fn new() -> Result<Self> {
+        let config = get_data().config.clone();
         let mut audio = create_audio_manger(&get_data().config)?;
         let cali = audio.create_music(
             AudioClip::new(load_file("cali.ogg").await?)?,
             MusicParams {
                 loop_mix_time: 0.,
+                amplifier: get_data().config.volume_music,
                 ..Default::default()
             },
         )?;
@@ -61,6 +62,7 @@ impl OffsetPage {
         let frame_times: VecDeque<f64> = VecDeque::new();
         let latency_record: VecDeque<f32> = VecDeque::new();
         Ok(Self {
+            config,
             audio,
             cali,
             cali_hit,
@@ -180,10 +182,9 @@ impl Page for OffsetPage {
 
             let ot = t;
 
-            let config = &get_data().config;
-            let mut t = self.tm.now() as f32 - config.offset;
+            let mut t = self.tm.now() as f32 - self.config.offset;
 
-            if config.adjust_time {
+            if self.config.adjust_time {
                 let latency = get_latency(&self.audio, &self.frame_times);
                 t -= latency;
                 ui.text(format!("{} {:.0}ms", tl!("estimated"), latency * 1000.))
@@ -211,7 +212,7 @@ impl Page for OffsetPage {
                 }
                 self.touched = false;
                 self.cali_hit.play(PlaySfxParams {
-                    amplifier: config.volume_sfx,
+                    amplifier: self.config.volume_sfx,
                 }).unwrap();
             }
 
@@ -264,11 +265,11 @@ impl Page for OffsetPage {
                 .color(Color::new(1., 1., 1., 0.8 * c.a))
                 .draw();
 
-            let offset = config.offset * 1000.;
+            let offset = self.config.offset * 1000.;
             self.slider
                 .render(ui, Rect::new(-0.08, ct.y + aspect * 0.1 - 0.2 / 2., 0.45, 0.2), ot, c, offset, format!("{offset:.0}ms"));
 
-            if config.adjust_time {
+            if self.config.adjust_time {
                 push_frame_time(&mut self.frame_times, self.tm.real_time());
             }
         });
