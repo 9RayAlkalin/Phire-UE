@@ -1,6 +1,8 @@
 name: "air light Z"
 author: 星鹿ELEC
-description: 随便做的，您能喜欢就最好了（发布auto或二创前请获得星鹿子的同意，手元随意，不过最好标注一下资源包作者）（授权Lchzh3473使用）
+description: 
 hitFx: [8, 8]
 holdAtlas: [50, 50]
 holdAtlasMH: [125, 125]
+hitFxRotate: true
+circleParticles: true
