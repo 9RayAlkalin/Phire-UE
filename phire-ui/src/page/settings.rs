@@ -541,6 +541,7 @@ struct ChartList {
     opt_btn: DRectButton,
     speed_slider: Slider,
     size_slider: Slider,
+    render_extra_btn: DRectButton,
 }
 
 impl ChartList {
@@ -552,6 +553,7 @@ impl ChartList {
             opt_btn: DRectButton::new(),
             speed_slider: Slider::new(0.1..2.0, 0.05),
             size_slider: Slider::new(0.0..5.0, 0.005),
+            render_extra_btn: DRectButton::new(),
         }
     }
 
@@ -583,6 +585,10 @@ impl ChartList {
         }
         if let wt @ Some(_) = self.size_slider.touch(touch, t, &mut config.note_scale) {
             return Ok(wt);
+        }
+        if self.render_extra_btn.touch(touch, t) {
+            config.render_extra ^= true;
+            return Ok(Some(true));
         }
         Ok(None)
     }
@@ -628,6 +634,10 @@ impl ChartList {
         item! {
             render_title(ui, c, tl!("item-note-size"), None);
             self.size_slider.render(ui, rr, t,c, config.note_scale, format!("{:.3}", config.note_scale));
+        }
+        item! {
+            render_title(ui, c, tl!("item-render-extra"), None);
+            render_switch(ui, rr, t, c, &mut self.render_extra_btn, config.render_extra);
         }
         (w, h)
     }

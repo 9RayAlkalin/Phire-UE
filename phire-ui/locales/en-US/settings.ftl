@@ -41,6 +41,7 @@ item-opt = Aggressive optimization
 item-opt-sub = Improves performance, but can cause incorrect behavior
 item-speed = Speed
 item-note-size = Note size
+item-render-extra = Enable Extra (Shader/Effect)
 
 item-chart-debug-line = Chart Debug Mode - Line
 item-chart-debug-line-sub = Display line properties
