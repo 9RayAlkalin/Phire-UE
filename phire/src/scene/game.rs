@@ -1346,9 +1346,14 @@ impl Scene for GameScene {
             render_target: chart_onto,
             ..Default::default()
         });
+
         if res.config.render_bg {
             clear_background(BLACK);
             draw_background(*res.background, res.config.render_bg_dim);
+        }
+
+        if res.config.render_bg_green {
+            clear_background(Color::new(0.0, 1.0, 0.0, 1.0));
         }
 
         if res.config.render_bg_dim && res.config.chart_ratio >= 1. {
