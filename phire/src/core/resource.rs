@@ -517,7 +517,7 @@ impl Resource {
         let note_width = config.note_scale * NOTE_WIDTH_RATIO_BASE;
         let note_scale = config.note_scale;
 
-        let no_effect = config.render_extra || has_no_effect;
+        let no_effect = !config.render_extra || has_no_effect;
 
         let emitter = ParticleEmitter::new(&res_pack, note_scale, res_pack.info.hide_particles, Some(config.clone()))?;
 
