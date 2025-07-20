@@ -571,7 +571,7 @@ impl ChartList {
             return Ok(Some(true));
         }
         if self.dhint_btn.touch(touch, t) {
-            config.double_hint ^= true;
+            config.render_double_hint ^= true;
             return Ok(Some(true));
         }
         if self.opt_btn.touch(touch, t) {
@@ -615,7 +615,7 @@ impl ChartList {
         }
         item! {
             render_title(ui, c, tl!("item-dhint"), Some(tl!("item-dhint-sub")));
-            render_switch(ui, rr, t, c, &mut self.dhint_btn, config.double_hint);
+            render_switch(ui, rr, t, c, &mut self.dhint_btn, config.render_double_hint);
         }
         item! {
             render_title(ui, c, tl!("item-opt"), Some(tl!("item-opt-sub")));

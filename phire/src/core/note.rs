@@ -296,13 +296,13 @@ impl Note {
             }
         }
 
-        let scale = (if res.config.double_hint && self.multiple_hint {
+        let scale = (if res.config.render_double_hint && self.multiple_hint {
             res.res_pack.note_style_mh.click.width() / res.res_pack.note_style.click.width()
         } else {
             1.0
         }) * res.note_width;
         let order = self.kind.order();
-        let style = if res.config.double_hint && self.multiple_hint {
+        let style = if res.config.render_double_hint && self.multiple_hint {
             &res.res_pack.note_style_mh
         } else {
             &res.res_pack.note_style
@@ -366,7 +366,7 @@ impl Note {
                     //    return;
                     //}
 
-                    let style = if res.config.double_hint && self.multiple_hint {
+                    let style = if res.config.render_double_hint && self.multiple_hint {
                         &res.res_pack.note_style_mh
                     } else {
                         &res.res_pack.note_style
