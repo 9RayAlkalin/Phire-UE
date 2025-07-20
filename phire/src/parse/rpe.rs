@@ -393,7 +393,7 @@ async fn parse_notes(
                     } else {
                         AnimFloat::fixed(note.size)
                     },
-                    if note.size == 1.0 || info.note_uniform_scale {
+                    if note.size == 1.0 || !info.note_uniform_scale {
                         AnimFloat::default()
                     } else {
                         AnimFloat::fixed(note.size)
