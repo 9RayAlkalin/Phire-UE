@@ -497,6 +497,29 @@ impl JudgeLine {
             if res.config.chart_debug_line > 0. {
                 res.with_model(Matrix::identity().append_nonuniform_scaling(&Vector::new(1.0, -1.0)), |res| {
                     res.apply_model(|res| {
+                        let kind = match &self.kind {
+                            JudgeLineKind::Normal => {
+                                if !res.config.render_line { return };
+                                String::new()
+                            },
+                            JudgeLineKind::Text(text) => {
+                                if !res.config.render_line_extra { return };
+                                format!(" text:{}", text.now())
+                            },
+                            JudgeLineKind::Texture(_, name) => {
+                                if !res.config.render_line_extra { return };
+                                format!(" img:{}", name)
+                            },
+                            JudgeLineKind::TextureGif(_, frames, name) => {
+                                if !res.config.render_line_extra { return };
+                                format!(" gif:{}/{}", name, frames.total_time())
+                            },
+                            JudgeLineKind::Paint(_, _) => {
+                                if !res.config.render_line_extra { return };
+                                format!(" paint")
+                            },
+                        };
+
                         let parent = if let Some(parent) = self.parent {
                             format!("({})", parent)
                         } else {
@@ -542,13 +565,6 @@ impl JudgeLine {
                             Color::new(1., 1., 0., parse_alpha(alpha, res.alpha, 0.15, res.config.chart_debug_line > 0.))
                         } else {
                             Color::new(1., 1., 1., parse_alpha(alpha, res.alpha, 0.15, res.config.chart_debug_line > 0.))
-                        };
-                        let kind = match &self.kind {
-                            JudgeLineKind::Normal => String::new(),
-                            JudgeLineKind::Text(text) => format!(" text:{}", text.now()),
-                            JudgeLineKind::Texture(_, name) => format!(" img:{}", name),
-                            JudgeLineKind::TextureGif(_, frames, name) => format!(" gif:{}/{}", name, frames.total_time()),
-                            JudgeLineKind::Paint(_, _) => format!(" paint"),
                         };
                         ui.text(format!("[{}]{} h:{:.2}{}{}{}{}{}", id, parent, config.line_height, line_height_ulp_string, z_index, attach_ui, anchor, kind))
                         .pos(0., -res.config.chart_debug_line * 0.1)
