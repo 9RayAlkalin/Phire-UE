@@ -32,7 +32,7 @@ pub struct EndingScene {
     background: SafeTexture,
     illustration: SafeTexture,
     player: SafeTexture,
-    icons: [SafeTexture; 8],
+    icon: SafeTexture,
     icon_retry: SafeTexture,
     icon_proceed: SafeTexture,
     target: Option<RenderTarget>,
@@ -75,15 +75,16 @@ impl EndingScene {
         result: PlayResult,
         challenge_texture: SafeTexture,
         config: &Config,
-        bgm: AudioClip,
+        endings: [AudioClip; 8],
         upload_fn: Option<UploadFn>,
         player_rks: Option<f32>,
         record_data: Option<Vec<u8>>,
         record: Option<SimpleRecord>,
     ) -> Result<Self> {
+        let index = icon_index(result.score, result.num_of_notes == result.max_combo);
         let mut audio = create_audio_manger(config)?;
         let bgm = audio.create_music(
-            bgm,
+            endings[index].clone(),
             MusicParams {
                 amplifier: config.volume_music,
                 loop_mix_time: 0.,
@@ -97,7 +98,7 @@ impl EndingScene {
             background,
             illustration,
             player,
-            icons,
+            icon: icons[index].clone(),
             icon_retry,
             icon_proceed,
             target: None,
@@ -376,14 +377,13 @@ impl Scene for EndingScene {
             let r = draw_text_aligned(ui, &text, main.x + dx + 0.01, main.bottom() - 0.040, (0., 1.), 0.34, Color::new(1., 1., 1., pa)); // 分数下面的字
             let score = if self.config.roman {GameScene::int_to_roman(res.score)} else if self.config.chinese {GameScene::int_to_chinese(res.score)} else {format!("{:07}", res.score)};
             let r = draw_text_aligned_fix(ui, &score, r.x - 0.012, r.y - 0.019, (0., 1.), 1.05, Color::new(1., 1., 1., pa), 0.4); // 分数
-            let icon = icon_index(res.score, res.num_of_notes == res.max_combo);
             let pa = ran(t, A_ICON_ALPHA_START, A_ICON_ALPHA_END);
             let ps = ran(t, A_ICON_SCALE_START, A_ICON_SCALE_END).powi(3);
             let s = main.h * 0.72;
             let ct = (main.right() + 0.015 - main.h * slope - s / 2., r.bottom() + 0.033 - s / 2.);
             let s = s + s * (1. - ps) * 0.3;
             draw_texture_ex( // 成绩等级图标
-                *self.icons[icon],
+                *self.icon,
                 ct.0 - s * 0.99 / 2.,
                 ct.1 - s * 1.05 / 2.,
                 Color::new(1., 1., 1., pa),

@@ -184,7 +184,7 @@ pub struct ResourcePack {
     pub sfx_click: AudioClip,
     pub sfx_drag: AudioClip,
     pub sfx_flick: AudioClip,
-    pub ending: AudioClip,
+    pub endings: [AudioClip; 8],
     pub hit_fx: SafeTexture,
 }
 
@@ -259,6 +259,24 @@ impl ResourcePack {
                 }
             };
         }
+
+        macro_rules! load_ending {
+            ($suffix:literal) => {
+                if let Some(sfx) = fs.load_file(format!("ending{}.ogg", $suffix).as_str()).await.ok().map(|it| AudioClip::new(it)).transpose()? {
+                    sfx
+                } else if let Some(sfx) = fs.load_file(format!("ending{}.mp3", $suffix).as_str()).await.ok().map(|it| AudioClip::new(it)).transpose()? {
+                    sfx
+                } else if let Some(sfx) = fs.load_file(format!("ending.ogg").as_str()).await.ok().map(|it| AudioClip::new(it)).transpose()? {
+                    sfx
+                } else if let Some(sfx) = fs.load_file(format!("ending.mp3").as_str()).await.ok().map(|it| AudioClip::new(it)).transpose()? {
+                    sfx
+                } else if let Ok(file) = load_file(format!("ending{}.ogg", $suffix).as_str()).await {
+                    AudioClip::new(file)?
+                } else {
+                    AudioClip::new(load_file(format!("ending.ogg").as_str()).await?)?
+                }
+            };
+        }
         Ok(Self {
             info,
             note_style,
@@ -266,7 +284,16 @@ impl ResourcePack {
             sfx_click: load_clip!("click"),
             sfx_drag: load_clip!("drag"),
             sfx_flick: load_clip!("flick"),
-            ending: load_clip!("ending"),
+            endings: [
+                load_ending!("_ap"),
+                load_ending!("_fc"),
+                load_ending!("_v"),
+                load_ending!("_s"),
+                load_ending!("_a"),
+                load_ending!("_b"),
+                load_ending!("_c"),
+                load_ending!("")
+                ],
             hit_fx,
         })
     }
@@ -448,14 +475,14 @@ impl Resource {
             };
         }
         Ok(loads![
-            "rank/F.png",
-            "rank/C.png",
-            "rank/B.png",
-            "rank/A.png",
-            "rank/S.png",
-            "rank/V.png",
+            "rank/phi.png",
             "rank/FC.png",
-            "rank/phi.png"
+            "rank/V.png",
+            "rank/S.png",
+            "rank/A.png",
+            "rank/B.png",
+            "rank/C.png",
+            "rank/F.png"
         ])
     }
 

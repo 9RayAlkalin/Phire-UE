@@ -1131,7 +1131,7 @@ impl Scene for GameScene {
                             self.judge.result(),
                             self.res.challenge_icons[self.res.config.challenge_color.clone() as usize].clone(),
                             &self.res.config,
-                            self.res.res_pack.ending.clone(),
+                            self.res.res_pack.endings.clone(),
                             self.upload_fn.as_ref().map(Arc::clone),
                             self.player.as_ref().map(|it| it.rks),
                             record_data,

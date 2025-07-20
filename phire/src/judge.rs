@@ -1048,13 +1048,13 @@ pub struct PlayResult {
 
 pub fn icon_index(score: u32, full_combo: bool) -> usize {
     match (score, full_combo) {
-        (x, _) if x >= 1000000 => 7,
-        (_, true) => 6,
-        (x, _) if x < 700000 => 0,
-        (x, _) if x < 820000 => 1,
-        (x, _) if x < 880000 => 2,
-        (x, _) if x < 920000 => 3,
-        (x, _) if x < 960000 => 4,
-        (_, false) => 5,
+        (x, _) if x >= 1000000 => 0,
+        (_, true) => 1,
+        (x, _) if x < 700000 => 7,
+        (x, _) if x < 820000 => 6,
+        (x, _) if x < 880000 => 5,
+        (x, _) if x < 920000 => 4,
+        (x, _) if x < 960000 => 3,
+        (_, false) => 2,
     }
 }
