@@ -304,11 +304,15 @@ impl GameScene {
     }
     
 
-    pub async fn load_chart(fs: &mut dyn FileSystem, info: &ChartInfo) -> Result<(Chart, Vec<u8>, ChartFormat)> {
-        let extra = if let Some(extra) = fs.load_file("extra.json").await.ok().map(String::from_utf8).transpose()? {
-            parse_extra(&extra, fs).await.context("Failed to parse extra")?
-        } else if let Some(extra) = fs.load_file("extra1.json").await.ok().map(String::from_utf8).transpose()? {
-            parse_extra(&extra, fs).await.context("Failed to parse extra1")?
+    pub async fn load_chart(fs: &mut dyn FileSystem, info: &ChartInfo, config: &Config) -> Result<(Chart, Vec<u8>, ChartFormat)> {
+        let extra = if config.render_extra {
+            if let Some(extra) = fs.load_file("extra.json").await.ok().map(String::from_utf8).transpose()? {
+                parse_extra(&extra, fs).await.context("Failed to parse extra")?
+            } else if let Some(extra) = fs.load_file("extra1.json").await.ok().map(String::from_utf8).transpose()? {
+                parse_extra(&extra, fs).await.context("Failed to parse extra1")?
+            } else {
+                ChartExtra::default()
+            }
         } else {
             ChartExtra::default()
         };
@@ -361,7 +365,7 @@ impl GameScene {
             }
             _ => {}
         }
-        let (mut chart, chart_bytes, chart_format) = Self::load_chart(fs.deref_mut(), &info).await?;
+        let (mut chart, chart_bytes, chart_format) = Self::load_chart(fs.deref_mut(), &info, &config).await?;
         let effects = std::mem::take(&mut chart.extra.global_effects);
         if config.fxaa {
             chart
