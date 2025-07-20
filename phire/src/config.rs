@@ -94,7 +94,6 @@ pub struct Config {
     pub render_ui_bar: bool,
     pub render_bg: bool,
     pub render_bg_dim: bool,
-    pub render_bg_green: bool,
     pub render_extra: bool,
     pub bg_blurriness: f32,
 
@@ -167,7 +166,6 @@ impl Default for Config {
             render_ui_bar: true,
             render_bg: true,
             render_bg_dim: true,
-            render_bg_green: false,
             render_extra: true,
             bg_blurriness: 80.,
         
