@@ -1352,6 +1352,10 @@ impl Scene for GameScene {
             draw_background(*res.background, res.config.render_bg_dim);
         }
 
+        if res.config.render_bg_green {
+            clear_background(Color::new(0.0, 1.0, 0.0, 1.0));
+        }
+
         if res.config.render_bg_dim && res.config.chart_ratio >= 1. {
             let dim_alpha = 0.7;
             //let alpha = res.alpha * (1. - dim_alpha) + dim_alpha;    
@@ -1383,19 +1387,7 @@ impl Scene for GameScene {
             ..Default::default()
         });
         self.gl.quad_gl.render_pass(chart_onto.map(|it| it.render_pass));
-
-        if res.config.render_bg_green {
-                clear_background(Color::new(0.0, 1.0, 0.0, 1.0));
-            } else {
-                res.apply_model_of(&Matrix::identity().append_nonuniform_scaling(&Vector::new(if res.config.flip_x() { -1. } else { 1. }, 1.)), |res| {
-                    for video in &self.chart.extra.videos {
-                        video.render(res);
-                    }
-                });
-            }
-        res.apply_model_of(&Matrix::identity().append_nonuniform_scaling(&Vector::new(if res.config.flip_x() { -1. } else { 1. }, -1.)), |res| {
-            self.chart.render(ui, res);
-        });
+        self.chart.render(ui, res);
 
         self.gl.quad_gl.render_pass(
             res.chart_target
