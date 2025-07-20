@@ -138,24 +138,17 @@ impl Chart {
     }
 
     pub fn render(&self, ui: &mut Ui, res: &mut Resource) {
-        res.apply_model_of(&Matrix::identity().append_nonuniform_scaling(&Vector::new(if res.config.flip_x() { -1. } else { 1. }, 1.)), |res| {
-            for video in &self.extra.videos {
-                video.render(res);
+        let mut guard = self.bpm_list.borrow_mut();
+        for id in &self.order {
+            self.lines[*id].render(ui, res, &self.lines, &mut guard, &self.settings, *id);
+        }
+        drop(guard);
+        res.note_buffer.borrow_mut().draw_all();
+        if res.config.sample_count > 1 {
+            unsafe { get_internal_gl() }.flush();
+            if let Some(target) = &res.chart_target {
+                target.blit();
             }
-        });
-        res.apply_model_of(&Matrix::identity().append_nonuniform_scaling(&Vector::new(if res.config.flip_x() { -1. } else { 1. }, -1.)), |res| {
-            let mut guard = self.bpm_list.borrow_mut();
-            for id in &self.order {
-                self.lines[*id].render(ui, res, &self.lines, &mut guard, &self.settings, *id);
-            }
-            drop(guard);
-            res.note_buffer.borrow_mut().draw_all();
-            if res.config.sample_count > 1 {
-                unsafe { get_internal_gl() }.flush();
-                if let Some(target) = &res.chart_target {
-                    target.blit();
-                }
-            }
-        });
+        }
     }
 }
