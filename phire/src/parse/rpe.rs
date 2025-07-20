@@ -9,7 +9,8 @@ use crate::{
     },
     ext::{NotNanExt, SafeTexture},
     fs::FileSystem,
-    judge::{HitSound, JudgeStatus},
+    info::ChartInfo,
+    judge::{HitSound, JudgeStatus}
 };
 use anyhow::{Context, Result};
 use image::{codecs::gif, AnimationDecoder, DynamicImage, ImageError};
@@ -323,6 +324,7 @@ fn parse_gif_events<V: Clone + Into<f32>>(r: &mut BpmList, rpe: &[RPEEvent<V>], 
 
 async fn parse_notes(
     r: &mut BpmList,
+    info: &ChartInfo,
     rpe: Vec<RPENote>,
     fs: &mut dyn FileSystem,
     height: &mut AnimFloat,
@@ -391,7 +393,11 @@ async fn parse_notes(
                     } else {
                         AnimFloat::fixed(note.size)
                     },
-                    AnimFloat::default(),
+                    if note.size == 1.0 || info.note_uniform_scale {
+                        AnimFloat::default()
+                    } else {
+                        AnimFloat::fixed(note.size)
+                    },
                 ),
                 ..Default::default()
             },
@@ -426,6 +432,7 @@ fn parse_ctrl_events(rpe: &[RPECtrlEvent], key: &str) -> AnimFloat {
 
 async fn parse_judge_line(
     bpm_list: Vec<RPEBpmItem>,
+    info: &ChartInfo,
     rpe: RPEJudgeLine,
     max_time: f32,
     fs: &mut dyn FileSystem,
@@ -454,7 +461,7 @@ async fn parse_judge_line(
         Ok(res)
     }
     let mut height = parse_speed_events(r, &event_layers, max_time)?;
-    let mut notes = parse_notes(r, rpe.notes.unwrap_or_default(), fs, &mut height, hitsounds).await?;
+    let mut notes = parse_notes(r, info, rpe.notes.unwrap_or_default(), fs, &mut height, hitsounds).await?;
     let cache = JudgeLineCache::new(&mut notes);
     Ok(JudgeLine {
         object: Object {
@@ -641,7 +648,7 @@ fn get_bezier_map(rpe: &RPEChart) -> BezierMap {
     map
 }
 
-pub async fn parse_rpe(source: &str, fs: &mut dyn FileSystem, extra: ChartExtra) -> Result<Chart> {
+pub async fn parse_rpe(source: &str, fs: &mut dyn FileSystem, info: &ChartInfo, extra: ChartExtra) -> Result<Chart> {
     let rpe: RPEChart = serde_json::from_str(source).with_context(|| ptl!("json-parse-failed"))?;
     let bezier_map = get_bezier_map(&rpe);
     let bpm_list = rpe.bpm_list;
@@ -686,7 +693,7 @@ pub async fn parse_rpe(source: &str, fs: &mut dyn FileSystem, extra: ChartExtra)
     for (id, line) in rpe.judge_line_list.into_iter().enumerate() {
         let name = line.name.clone();
         lines.push(
-            parse_judge_line(bpm_list.clone(), line, max_time, fs, &bezier_map, &mut hitsounds)
+            parse_judge_line(bpm_list.clone(), info, line, max_time, fs, &bezier_map, &mut hitsounds)
                 .await
                 .with_context(move || ptl!("judge-line-location-name", "jlid" => id, "name" => name))?,
         );
