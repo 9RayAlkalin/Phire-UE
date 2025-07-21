@@ -169,7 +169,7 @@ impl Note {
         if let Some(color) = color {
             self.init_ctrl_obj(ctrl_obj, line_height);
             let rotation = if self.above { 0. } else { 180. };
-            res.with_model(parent_tr * self.now_transform(res, ctrl_obj, 0., 0.), |res| {
+            res.with_model(parent_tr * self.now_transform(res, ctrl_obj, 0., 0., false, false), |res| {
                 res.emit_at_origin(parent_rot + rotation, color)
             });
         }
@@ -185,14 +185,18 @@ impl Note {
         ctrl_obj.set_height((self.height - line_height + self.object.translation.1.now() / self.speed) * RPE_HEIGHT / 2.);
     }
 
-    pub fn now_transform(&self, res: &Resource, ctrl_obj: &CtrlObject, base: f32, incline_sin: f32) -> Matrix {
+    pub fn now_transform(&self, res: &Resource, ctrl_obj: &CtrlObject, base: f32, incline_sin: f32, can_scale_x: bool, can_scale_y: bool) -> Matrix {
         let incline_val = 1. - incline_sin * (base * res.aspect_ratio + self.object.translation.1.now()) * RPE_HEIGHT / 2. / 360.;
         let mut tr = self.object.now_translation(res);
         tr.x *= incline_val * ctrl_obj.pos.now_opt().unwrap_or(1.);
         tr.y += base;
         let mut scale = self.object.scale.now_with_def(1.0, 1.0);
-        scale.x *= ctrl_obj.size.now_opt().unwrap_or(1.0);
-        if res.info.note_uniform_scale {
+        if can_scale_x {
+            scale.x *= ctrl_obj.size.now_opt().unwrap_or(1.0);
+        } else {
+            scale.x = 1.0;
+        };
+        if res.info.note_uniform_scale && can_scale_y {
             scale.y *= ctrl_obj.size.now_opt().unwrap_or(1.0);
         } else {
             scale.y = 1.0;
@@ -317,7 +321,7 @@ impl Note {
             if !config.draw_below {
                 color.a *= (self.time - res.time).min(0.) / FADEOUT_TIME + 1.;
             }
-            res.with_model(self.now_transform(res, ctrl_obj, base, config.incline_sin), |res| {
+            res.with_model(self.now_transform(res, ctrl_obj, base, config.incline_sin, true, true), |res| {
                 draw_center(res, tex, order, scale, color);
             });
         };
@@ -328,7 +332,7 @@ impl Note {
             }
             NoteKind::Hold { end_time, end_height, end_speed } => {
                 if self.fake && res.time >= end_time { return };
-                res.with_model(self.now_transform(res, ctrl_obj, 0., 0.), |res| {
+                res.with_model(self.now_transform(res, ctrl_obj, 0., 0., true, false), |res| {
                     if matches!(self.judge, JudgeStatus::Judged) {
                         // miss
                         color.a *= 0.5;
@@ -476,7 +480,7 @@ impl Note {
                         };
                         format!(" v: {}{}", self.speed, end_spd)
                     };
-                    res.with_model(self.now_transform(res, ctrl_obj, bottom, config.incline_sin), |res: &mut Resource| {
+                    res.with_model(self.now_transform(res, ctrl_obj, bottom, config.incline_sin, false, false), |res: &mut Resource| {
                         res.with_model(Matrix::new_nonuniform_scaling(&Vector::new(1.0, if self.above { -1.0 } else { 1.0 })), |res: &mut Resource| {
                             res.apply_model(|res| {
                                 ui.text(format!("[{}] t:{:.2}({:.2}) h:{:.2}({:.2})[{:.2}]", line_id, self.time, end_time, self.height, end_height, base))
@@ -502,7 +506,7 @@ impl Note {
                     } else {
                         format!(" v: {}", self.speed)
                     };
-                    res.with_model(self.now_transform(res, ctrl_obj, base, config.incline_sin), |res: &mut Resource| {
+                    res.with_model(self.now_transform(res, ctrl_obj, base, config.incline_sin, false, false), |res: &mut Resource| {
                         res.with_model(Matrix::new_nonuniform_scaling(&Vector::new(1.0, if self.above { -1.0 } else { 1.0 })), |res: &mut Resource| {
                             res.apply_model(|res| {
                                 ui.text(format!("[{}] t:{:.2} h:{:.2}[{:.2}]", line_id, self.time, self.height, base))
