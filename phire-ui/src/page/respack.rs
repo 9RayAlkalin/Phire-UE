@@ -25,7 +25,7 @@ use std::{
     },
 };
 
-fn build_emitter(pack: &ResourcePack) -> Result<ParticleEmitter> {
+fn build_emitter(pack: &ResourcePack) -> ParticleEmitter {
     ParticleEmitter::new(pack, get_data().config.note_scale * 0.6, pack.info.hide_particles, None)
 }
 
@@ -174,7 +174,7 @@ impl Page for ResPackPage {
                         show_error(err.context(tl!("load-failed")));
                     }
                     Ok(val) => {
-                        self.emitter = Some(build_emitter(&val)?);
+                        self.emitter = Some(build_emitter(&val));
                         self.sfxs = Some([
                             self.audio.create_sfx(val.sfx_click.clone(), None)?,
                             self.audio.create_sfx(val.sfx_drag.clone(), None)?,

@@ -12,10 +12,15 @@ use miniquad::{gl::{GLuint, GL_LINEAR}, Texture, TextureWrap};
 use sasa::{AudioClip, AudioManager, Sfx};
 use serde::Deserialize;
 use std::{cell::RefCell, collections::{BTreeMap, HashMap, VecDeque}, ops::DerefMut, path::Path, sync::atomic::AtomicU32};
+use rand_pcg::{
+    Pcg32,
+    rand_core::SeedableRng
+};
 
 pub const MAX_SIZE: usize = 64; // needs tweaking
 pub static DPI_VALUE: AtomicU32 = AtomicU32::new(250);
 pub const BUFFER_SIZE: usize = 1024;
+pub const RNG_SEED: u64 = 0x7a_61_6b_6f;
 
 #[inline]
 fn default_scale() -> f32 {
@@ -309,7 +314,7 @@ pub struct ParticleEmitter {
 }
 
 impl ParticleEmitter {
-    pub fn new(res_pack: &ResourcePack, scale: f32, hide_particles: bool, config: Option<Config>) -> Result<Self> {
+    pub fn new(res_pack: &ResourcePack, scale: f32, hide_particles: bool, config: Option<Config>) -> Self {
         let colors_curve = {
             let start = WHITE;
             let mut mid = start;
@@ -339,17 +344,19 @@ impl ParticleEmitter {
         } else {
             ParticleShape::Rectangle { aspect_ratio: 1.0 }
         };
+        let rng = Pcg32::seed_from_u64(RNG_SEED);
         let emitter_square_config = EmitterConfig {
             max_particles: config.max_particles,
+            rng: Some(rng),
             local_coords: false,
             lifetime: res_pack.info.hit_fx_duration,
             lifetime_randomness: 0.0,
             initial_direction_spread: 2. * std::f32::consts::PI,
             size_randomness: 0.3,
             emitting: false,
-            initial_velocity: 3.3 * scale,
+            initial_velocity: 4.3 * scale,
             initial_velocity_randomness: 0.3  * scale,
-            linear_accel: -7.0,
+            linear_accel: -9.0,
             shape,
             colors_curve,
             ..Default::default()
@@ -363,7 +370,7 @@ impl ParticleEmitter {
             hide_particles,
         };
         res.set_scale(scale);
-        Ok(res)
+        res
     }
 
     pub fn emit_at(&mut self, pt: Vec2, rotation: f32, color: Color) {
@@ -546,7 +553,7 @@ impl Resource {
 
         let no_effect = !config.render_extra || has_no_effect;
 
-        let emitter = ParticleEmitter::new(&res_pack, note_scale, res_pack.info.hide_particles, Some(config.clone()))?;
+        let emitter = ParticleEmitter::new(&res_pack, note_scale, res_pack.info.hide_particles, Some(config.clone()));
 
         macroquad::window::gl_set_drawcall_buffer_capacity(MAX_SIZE * 4, MAX_SIZE * 6);
         Ok(Self {
@@ -594,6 +601,11 @@ impl Resource {
 
             model_stack: vec![Matrix::identity()],
         })
+    }
+
+    pub fn reset(&mut self) {
+        self.judge_line_color = self.res_pack.info.line_perfect();
+        self.emitter = ParticleEmitter::new(&self.res_pack, self.config.note_scale, self.res_pack.info.hide_particles, Some(self.config.clone()));
     }
 
     pub fn emit_at_origin(&mut self, rotation: f32, color: Color) {

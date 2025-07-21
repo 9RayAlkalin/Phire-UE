@@ -11,6 +11,7 @@
 
 use macroquad::prelude::*;
 use macroquad::window::miniquad::*;
+use rand_pcg::rand_core::RngCore;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Interpolation {
@@ -108,6 +109,7 @@ impl Default for ColorCurve {
 #[derive(Debug, Clone)]
 pub struct EmitterConfig {
     pub max_particles: usize,
+    pub rng: Option<rand_pcg::Lcg64Xsh32>,
     /// If false - particles spawns at position supplied to .draw(), but afterwards lives in current camera coordinate system.
     /// If false particles use coordinate system originated to the emitter draw position
     pub local_coords: bool,
@@ -347,6 +349,7 @@ impl Default for EmitterConfig {
     fn default() -> EmitterConfig {
         EmitterConfig {
             max_particles: 600000,
+            rng: None,
             local_coords: false,
             emission_shape: EmissionShape::Point,
             one_shot: false,
@@ -571,15 +574,24 @@ impl Emitter {
         }
         let offset = offset + self.config.emission_shape.gen_random_point();
 
-        fn random_initial_vector(dir: Vec2, spread: f32, velocity: f32) -> Vec2 {
-            let angle = rand::gen_range(-spread / 2.0, spread / 2.0);
+        fn map_u64_to_f32(r: u64, min: f32, max: f32) -> f32 {
+            let frac = (r as f64) / (u64::MAX as f64 + 1.0);
+            min + (max - min) * (frac as f32)
+        }
+
+        let mut random_initial_vector = |dir: Vec2, spread: f32, velocity: f32| -> Vec2 {
+            let angle = if let Some(rng) = self.config.rng.as_mut() {
+                map_u64_to_f32(rng.next_u64(), -spread / 2.0, spread / 2.0)
+            } else {
+                rand::gen_range(-spread / 2.0, spread / 2.0)
+            };
 
             let quat = glam::Quat::from_rotation_z(angle);
             let dir = quat * vec3(dir.x, dir.y, 0.0);
             let res = dir * velocity;
 
             vec2(res.x, res.y)
-        }
+        };
 
         let r = self.config.size - self.config.size * rand::gen_range(0.0, self.config.size_randomness);
 

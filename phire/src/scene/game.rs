@@ -149,7 +149,7 @@ macro_rules! reset {
         $self.bad_notes.clear();
         $self.judge.reset();
         $self.chart.reset();
-        $res.judge_line_color = $res.res_pack.info.line_perfect();
+        $res.reset();
         $self.music.pause()?;
         $self.music.seek_to(0.)?;
         $tm.speed = $res.config.speed as _;
@@ -1075,6 +1075,7 @@ impl Scene for GameScene {
                     }
                     tm.now() as f32
                 } else {
+                    self.res.emitter.emit_at(vec2(0.0, 2.0), 0., Color::new(0.0, 0.0, 0.0, 0.0));
                     GYRO.lock().unwrap().reset_gyroscope();
                     self.res.alpha = 1. - (1. - time / Self::BEFORE_TIME).clamp(0., 1.).powi(3);
                     self.exercise_range.start
