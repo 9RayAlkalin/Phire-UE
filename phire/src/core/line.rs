@@ -314,12 +314,9 @@ impl JudgeLine {
                         }
                     }
                     JudgeLineKind::Paint(anim, state) => {
-                        {
+                        if res.config.render_line_extra {
                             let mut color = color.unwrap_or(WHITE);
-                            color.a = parse_alpha(alpha.max(0.0), res.alpha, 0.15, res.config.chart_debug_line > 0.) * 2.55;
-                            if color.a == 0.0 {
-                                return;
-                            }
+                            color.a = parse_alpha(alpha.max(0.0) * 2.55, res.alpha, 0.15, res.config.chart_debug_line > 0.);
                             let mut gl = unsafe { get_internal_gl() };
                             let mut guard = state.borrow_mut();
                             let vp = get_viewport();
