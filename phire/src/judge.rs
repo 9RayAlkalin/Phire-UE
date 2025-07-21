@@ -557,7 +557,7 @@ impl Judge {
                         continue;
                     }
                     let dist_key = if res.config.full_scrrn_judge() {
-                        (dist / NOTE_WIDTH_RATIO_BASE - 1.).max(0.) * 0.02
+                        (dist / NOTE_WIDTH_RATIO_BASE - 1.).max(0.) * 0.01
                     } else {
                         (dist / NOTE_WIDTH_RATIO_BASE - 1.).max(0.) * DIST_FACTOR
                     };
