@@ -11,7 +11,7 @@ use super::{
     request_input, return_input, show_message, take_input, EndingScene, NextScene, Scene,
 };
 use crate::{
-    bin::{BinaryReader, BinaryWriter}, config::{Config, Mods}, core::{copy_fbo, BadNote, Chart, ChartExtra, Effect, Matrix, Point, Resource, UIElement, Vector, BUFFER_SIZE}, ext::{ease_in_out_quartic, get_latency, parse_time, push_frame_time, screen_aspect, semi_white, validate_combo, RectExt, SafeTexture}, fs::FileSystem, gyro::{Gyro, GYRO, GYROSCOPE_DATA}, info::{ChartFormat, ChartInfo}, judge::Judge, parse::{parse_extra, parse_pec, parse_phigros, parse_rpe}, task::Task, time::TimeManager, ui::{RectButton, Ui}
+    bin::{BinaryReader, BinaryWriter}, config::{Config, Mods}, core::{copy_fbo, BadNote, Chart, ChartExtra, Effect, Matrix, Point, Resource, UIElement, Vector, BUFFER_SIZE}, ext::{ease_in_out_quartic, get_latency, parse_time, push_frame_time, screen_aspect, semi_white, validate_combo, RectExt, SafeTexture}, fs::FileSystem, gyro::{Gyro, GYRO, GYROSCOPE_DATA}, info::{ChartFormat, ChartInfo}, judge::Judge, parse::{parse_extra, parse_pec, parse_phigros, parse_rpe}, particle::EmitterConfig, task::Task, time::TimeManager, ui::{RectButton, Ui}
 };
 use anyhow::{bail, Context, Result};
 use concat_string::concat_string;
@@ -1075,7 +1075,12 @@ impl Scene for GameScene {
                     }
                     tm.now() as f32
                 } else {
-                    self.res.emitter.emit_at(vec2(0.0, 2.0), 0., Color::new(0.0, 0.0, 0.0, 0.0));
+                    self.res.emitter.emitter.emit(&EmitterConfig {
+                        base_color: Color::new(0.0, 0.0, 0.0, 0.0),
+                        lifetime: 0.05,
+                        ..Default::default()
+                    }, vec2(0.0, 2.0), 5);
+
                     GYRO.lock().unwrap().reset_gyroscope();
                     self.res.alpha = 1. - (1. - time / Self::BEFORE_TIME).clamp(0., 1.).powi(3);
                     self.exercise_range.start

@@ -305,12 +305,12 @@ impl ResourcePack {
 }
 
 pub struct ParticleEmitter {
-    scale: f32,
-    emitter: Emitter,
-    emitter_config: EmitterConfig,
-    emitter_square: Emitter,
-    emitter_square_config: EmitterConfig,
-    hide_particles: bool,
+    pub scale: f32,
+    pub emitter: Emitter,
+    pub emitter_config: EmitterConfig,
+    pub emitter_square: Emitter,
+    pub emitter_square_config: EmitterConfig,
+    pub hide_particles: bool,
 }
 
 impl ParticleEmitter {
