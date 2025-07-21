@@ -487,13 +487,13 @@ impl Note {
                                     .pos(0., if self.above { res.config.chart_debug_note * 0.2 } else { -res.config.chart_debug_note * 0.2 })
                                     .anchor(0.5, 1.)
                                     .size(res.config.chart_debug_note)
-                                    .color(Color::new(1., 1., 1., res.alpha))
+                                    .color(Color::new(1., 1., 1., color.a))
                                     .draw();
                                 ui.text(format!("{}{}{}", speed, above, fake))
                                     .pos(0., if self.above { res.config.chart_debug_note * 0.3 } else { -res.config.chart_debug_note * 0.3 })
                                     .anchor(0.5, 1.)
                                     .size(res.config.chart_debug_note)
-                                    .color(Color::new(1., 1., 1., res.alpha))
+                                    .color(Color::new(1., 1., 1., color.a))
                                     .draw();
                             });
                         });
@@ -513,13 +513,13 @@ impl Note {
                                     .pos(0., res.config.chart_debug_note * 0.15)
                                     .anchor(0.5, 1.)
                                     .size(res.config.chart_debug_note)
-                                    .color(Color::new(1., 1., 1., res.alpha))
+                                    .color(Color::new(1., 1., 1., color.a))
                                     .draw();
                                 ui.text(format!("{}{}{}", speed, above, fake))
                                     .pos(0., res.config.chart_debug_note * 0.225)
                                     .anchor(0.5, 1.)
                                     .size(res.config.chart_debug_note)
-                                    .color(Color::new(1., 1., 1., res.alpha))
+                                    .color(Color::new(1., 1., 1., color.a))
                                     .draw();
                             });
                         });
