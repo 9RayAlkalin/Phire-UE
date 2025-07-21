@@ -590,7 +590,7 @@ impl GameScene {
                 text_btm
             });
             self.chart.with_element(ui, res, UIElement::Combo, Some((0., btm + 0.01 + unit_h / 2. * 0.34)), Some((0., btm + 0.01 + unit_h / 2. * 0.34)), |ui, color| {
-                if validate_combo(&res.config.combo) || res.config.combo.len() > 50 {
+                if (cfg!(feature = "play") && res.config.autoplay()) || validate_combo(&res.config.combo) || res.config.combo.len() > 50 {
                     ui.text("AUTOPLAY")
                     .pos(0., btm + 0.01)
                     .anchor(0.5, 0.)

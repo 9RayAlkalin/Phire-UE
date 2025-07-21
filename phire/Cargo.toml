@@ -7,9 +7,10 @@ license = "GPL-3.0-only"
 [lib]
 
 [features]
-default = ["log"]
+default = ["log", "play"]
 closed = []
 log = ["dep:tracing-subscriber", "dep:colored"]
+play = []
 
 [dependencies]
 chinese-number = "0.7.7"
