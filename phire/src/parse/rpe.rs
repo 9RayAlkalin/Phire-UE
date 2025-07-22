@@ -9,7 +9,6 @@ use crate::{
     },
     ext::{NotNanExt, SafeTexture},
     fs::FileSystem,
-    info::ChartInfo,
     judge::{HitSound, JudgeStatus}
 };
 use anyhow::{Context, Result};
@@ -26,7 +25,7 @@ const SPEED_RATIO: f32 = 10. / 45. / HEIGHT_RATIO;
 
 #[derive(Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
-struct RPEBpmItem {
+pub struct RPEBpmItem {
     bpm: f32,
     start_time: Triple,
 }
@@ -42,7 +41,7 @@ fn f32_one() -> f32 {
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
-struct RPEEvent<T = f32> {
+pub struct RPEEvent<T = f32> {
     #[serde(default = "f32_zero")]
     easing_left: f32,
     #[serde(default = "f32_one")]
@@ -60,7 +59,7 @@ struct RPEEvent<T = f32> {
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
-struct RPECtrlEvent {
+pub struct RPECtrlEvent {
     easing: u8,
     x: f32,
     #[serde(flatten)]
@@ -69,7 +68,7 @@ struct RPECtrlEvent {
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
-struct RPESpeedEvent {
+pub struct RPESpeedEvent {
     start_time: Triple,
     end_time: Triple,
     start: f32,
@@ -78,7 +77,7 @@ struct RPESpeedEvent {
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
-struct RPEEventLayer {
+pub struct RPEEventLayer {
     alpha_events: Option<Vec<RPEEvent>>,
     move_x_events: Option<Vec<RPEEvent>>,
     move_y_events: Option<Vec<RPEEvent>>,
@@ -87,7 +86,7 @@ struct RPEEventLayer {
 }
 
 #[derive(Clone, Deserialize)]
-struct RGBColor(u8, u8, u8);
+pub struct RGBColor(u8, u8, u8);
 impl From<RGBColor> for Color {
     fn from(RGBColor(r, g, b): RGBColor) -> Self {
         Self::from_rgba(r, g, b, 255)
@@ -96,7 +95,7 @@ impl From<RGBColor> for Color {
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
-struct RPEExtendedEvents {
+pub struct RPEExtendedEvents {
     color_events: Option<Vec<RPEEvent<RGBColor>>>,
     text_events: Option<Vec<RPEEvent<String>>>,
     scale_x_events: Option<Vec<RPEEvent>>,
@@ -108,7 +107,7 @@ struct RPEExtendedEvents {
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
-struct RPENote {
+pub struct RPENote {
     // TODO above == 0? what does that even mean?
     #[serde(rename = "type")]
     kind: u8,
@@ -127,7 +126,7 @@ struct RPENote {
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
-struct RPEJudgeLine {
+pub struct RPEJudgeLine {
     // TODO group
     #[serde(rename = "Name")]
     name: String,
@@ -160,13 +159,15 @@ struct RPEJudgeLine {
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
-struct RPEMetadata {
+pub struct RPEMetadata {
+    #[serde(rename = "RPEVersion")]
+    #[allow(unused)] rpe_version: i32,
     offset: i32,
 }
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
-struct RPEChart {
+pub struct RPEChart {
     #[serde(rename = "META")]
     meta: RPEMetadata,
     #[serde(rename = "BPMList")]
