@@ -776,18 +776,11 @@ impl GameScene {
                             pos = self.exercise_range.start;
                         }
                         self.music.play()?;
-                        res.time -= 1.;
-                        let dst = pos - 1.;
-                        if dst < 0. {
-                            self.music.pause()?;
-                            self.state = State::BeforeMusic;
-                        } else {
-                            self.music.seek_to(dst)?;
-                        }
+                        let now = tm.now();
                         tm.speed = res.config.speed as _;
                         tm.resume();
-                        tm.seek_to(pos as f64 - 1.);
-                        self.music.seek_to(pos - 1.);
+                        tm.seek_to(now - 1.);
+                        self.music.seek_to(now as f32 - 1.);
                         self.pause_rewind = PauseRewind {
                             time: Some(tm.now()),
                             duration: Some(1.0),
