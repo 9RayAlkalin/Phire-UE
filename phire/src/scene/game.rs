@@ -52,6 +52,7 @@ use inner::*;
 
 const WAIT_TIME: f32 = 0.5;
 const AFTER_TIME: f32 = 0.7;
+const PAUSE_BACKGROUND_ALPHA: f32 = 0.6;
 
 #[derive(Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -494,6 +495,7 @@ impl GameScene {
         if res.config.interactive
             && !tm.paused()
             && self.pause_rewind.time.is_none()
+            && matches!(self.state, State::Playing)
             && Judge::get_touches(res.config.chart_ratio).iter().any(|touch| {
                 touch.phase == TouchPhase::Started && {
                     let p = touch.position;
@@ -781,11 +783,10 @@ impl GameScene {
                         } else {
                             self.music.seek_to(dst)?;
                         }
-                        let now = tm.now();
                         tm.speed = res.config.speed as _;
                         tm.resume();
-                        tm.seek_to(now - 1.);
-                        self.music.seek_to(now as f32 - 1.);
+                        tm.seek_to(pos as f64 - 1.);
+                        self.music.seek_to(pos - 1.);
                         self.pause_rewind = PauseRewind {
                             time: Some(tm.now()),
                             duration: Some(1.0),
@@ -801,11 +802,13 @@ impl GameScene {
                 for touch in ui.ensure_touches() {
                     touch.position *= asp;
                 }
-                ui.scope(|ui| {
-                    ui.dx(0.3);
-                    ui.dy(-0.3);
-                    ui.slider(tl!("speed"), 0.1..2.0, 0.05, &mut self.res.config.speed, Some(0.5));
-                });
+                if matches!(self.mode, GameMode::Exercise) {
+                    ui.scope(|ui| {
+                        ui.dx(0.3);
+                        ui.dy(-0.3);
+                        ui.slider(tl!("speed"), 0.1..2.0, 0.05, &mut self.res.config.speed, Some(0.5));
+                    });
+                }
                 ui.dy(0.06);
                 let hw = 0.7;
                 let h = 0.06;
@@ -921,7 +924,7 @@ impl GameScene {
                 };
                 self.res.config.disable_audio = false;
             } else if dim {
-                let a = (duration - dt / duration).clamp(0.0, 1.0) * 0.6;
+                let a = (t / duration).clamp(0.0, 1.0) * PAUSE_BACKGROUND_ALPHA as f64;
                 let h = 1. / self.res.aspect_ratio;
                 draw_rectangle(-1., -h, 2., h * 2., Color::new(0., 0., 0., a as f32));
                 ui.text((t.ceil() as i32).to_string()).anchor(0.5, 0.5).size(1.).color(c).draw();
@@ -1210,13 +1213,16 @@ impl Scene for GameScene {
         if res.config.interactive && is_key_pressed(KeyCode::Space) {
             if tm.paused() {
                 if matches!(self.state, State::Playing) {
+                    let now = tm.now();
                     if (tm.speed - res.config.speed as f64).abs() > 1e-3 {
                         reset_music_speed!(self, res, tm);
                     }
+                    self.music.seek_to(now as f32)?;
                     self.music.play()?;
+                    tm.seek_to(now);
                     tm.resume();
                     self.pause_rewind = PauseRewind {
-                        time: Some(tm.now()),
+                        time: Some(now),
                         duration: Some(0.1),
                         dim: false
                     };
@@ -1459,7 +1465,7 @@ impl Scene for GameScene {
                 ..Default::default()
             });
             if tm.paused() {
-                draw_rectangle(-1., -1., 2., 2., Color::new(0., 0., 0., 0.6));
+                draw_rectangle(-1., -1., 2., 2., Color::new(0., 0., 0., PAUSE_BACKGROUND_ALPHA));
             }
         }
 
