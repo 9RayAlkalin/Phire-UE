@@ -525,7 +525,8 @@ impl GameScene {
             Self::int_to_chinese(self.judge.score())
         }
         else {
-            format!("{:07}", self.judge.score())
+            let width = self.judge.inner.score_total.to_string().len();
+            format!("{:0>width$}", self.judge.score(), width = width)
         };
         let score_top = top + eps * 2.8125 - (1. - p) * 0.4;
         let score_right = aspect_ratio - margin + 0.001;

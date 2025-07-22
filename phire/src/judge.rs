@@ -155,7 +155,7 @@ pub(crate) struct JudgeInner {
     max_combo: u32,
     counts: [u32; 4],
     num_of_notes: u32,
-    score_total: u32,
+    pub score_total: u32,
 }
 
 #[cfg(not(feature = "closed"))]
