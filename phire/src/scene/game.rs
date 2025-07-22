@@ -385,6 +385,8 @@ impl GameScene {
                 .push(Effect::new(0.0..f32::INFINITY, include_str!("fxaa.glsl"), Vec::new(), false).unwrap());
         }
 
+        let judge = Judge::new(&chart, info.score_total);
+
         let info_offset = info.offset;
         let mut res = Resource::new(
             config,
@@ -406,8 +408,6 @@ impl GameScene {
                 res.extra_sfxs.insert(name, clip);
             }
         });
-
-        let judge = Judge::new(&chart);
 
         let music = Self::new_music(&mut res)?;
         Ok(Self {

@@ -168,7 +168,6 @@ impl Default for Config {
             render_bg_dim: true,
             render_extra: true,
             bg_blurriness: 80.,
-        
 
             max_particles: 20000,
 
