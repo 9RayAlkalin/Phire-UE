@@ -831,13 +831,11 @@ impl<'a> Ui<'a> {
     }
 
     pub fn accent(&self) -> Color {
-        Color::from_hex(0xff2196f3)
+        Color::new(0.85, 0.85, 0.85, 1.0)
     }
 
     pub fn background(&self) -> Color {
-        //Color::from_hex(0xff546e7a)
-        //Color::from_hex(0xff3F51B5)
-        Color::from_hex(0xff212121)
+        Color::new(0.13, 0.13, 0.13, 1.0)
     }
 
     pub fn button(&mut self, id: &str, rect: Rect, text: impl Into<String>) -> bool {
@@ -874,7 +872,7 @@ impl<'a> Ui<'a> {
             let s = 0.03;
             let text = self.text(text).pos(w, 0.).size(0.5).no_baseline().draw();
             let r = Rect::new(w / 2. - s, text.center().y - s, s * 2., s * 2.);
-            self.fill_rect(r, if *value { self.accent() } else { WHITE });
+            self.fill_rect(r, if *value { self.accent() } else { self.background() });
             let r = Rect::new(r.x, r.y, text.right() - r.x, (text.bottom() - r.y).max(w));
             if self.clicked(r, entry) {
                 *value ^= true;
