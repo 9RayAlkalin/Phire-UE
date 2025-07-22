@@ -55,7 +55,7 @@ pub fn init_assets() {
     set_pc_assets_folder("assets");
 }
 
-#[derive(serde::Deserialize, Clone)]
+#[derive(serde::Deserialize, serde::Serialize, Clone)]
 pub struct Triple(i32, i32, i32);
 impl Default for Triple {
     fn default() -> Self {

@@ -15,7 +15,7 @@ use anyhow::{Context, Result};
 use image::{codecs::gif, AnimationDecoder, DynamicImage, ImageError};
 use macroquad::prelude::{Color, WHITE};
 use sasa::AudioClip;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use std::{cell::RefCell, collections::HashMap, future::IntoFuture, rc::Rc, str::FromStr, time::Duration};
 use tracing::debug;
 
@@ -23,7 +23,7 @@ pub const RPE_WIDTH: f32 = 1350.;
 pub const RPE_HEIGHT: f32 = 900.;
 const SPEED_RATIO: f32 = 10. / 45. / HEIGHT_RATIO;
 
-#[derive(Deserialize, Clone)]
+#[derive(Clone, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct RPEBpmItem {
     bpm: f32,
@@ -39,7 +39,7 @@ fn f32_one() -> f32 {
     1.
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct RPEEvent<T = f32> {
     #[serde(default = "f32_zero")]
@@ -57,7 +57,7 @@ pub struct RPEEvent<T = f32> {
     end_time: Triple,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct RPECtrlEvent {
     easing: u8,
@@ -66,7 +66,7 @@ pub struct RPECtrlEvent {
     value: HashMap<String, f32>,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct RPESpeedEvent {
     start_time: Triple,
@@ -75,7 +75,7 @@ pub struct RPESpeedEvent {
     end: f32,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct RPEEventLayer {
     alpha_events: Option<Vec<RPEEvent>>,
@@ -85,7 +85,7 @@ pub struct RPEEventLayer {
     speed_events: Option<Vec<RPESpeedEvent>>,
 }
 
-#[derive(Clone, Deserialize)]
+#[derive(Clone, Deserialize, Serialize)]
 pub struct RGBColor(u8, u8, u8);
 impl From<RGBColor> for Color {
     fn from(RGBColor(r, g, b): RGBColor) -> Self {
@@ -93,7 +93,7 @@ impl From<RGBColor> for Color {
     }
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct RPEExtendedEvents {
     color_events: Option<Vec<RPEEvent<RGBColor>>>,
@@ -105,7 +105,7 @@ pub struct RPEExtendedEvents {
     gif_events: Option<Vec<RPEEvent>>,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct RPENote {
     // TODO above == 0? what does that even mean?
@@ -124,7 +124,7 @@ pub struct RPENote {
     visible_time: f32,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct RPEJudgeLine {
     // TODO group
@@ -157,7 +157,7 @@ pub struct RPEJudgeLine {
     y_control: Vec<RPECtrlEvent>,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct RPEMetadata {
     #[serde(rename = "RPEVersion")]
@@ -165,7 +165,7 @@ pub struct RPEMetadata {
     offset: i32,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct RPEChart {
     #[serde(rename = "META")]
