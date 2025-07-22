@@ -307,9 +307,7 @@ impl ResourcePack {
 pub struct ParticleEmitter {
     pub scale: f32,
     pub emitter: Emitter,
-    pub emitter_config: EmitterConfig,
     pub emitter_square: Emitter,
-    pub emitter_square_config: EmitterConfig,
     pub hide_particles: bool,
 }
 
@@ -363,10 +361,8 @@ impl ParticleEmitter {
         };
         let mut res = Self {
             scale: res_pack.info.hit_fx_scale,
-            emitter: Emitter::new(emitter_config.clone()),
-            emitter_config,
-            emitter_square: Emitter::new(emitter_square_config.clone()),
-            emitter_square_config,
+            emitter: Emitter::new(emitter_config),
+            emitter_square: Emitter::new(emitter_square_config),
             hide_particles,
         };
         res.set_scale(scale);
@@ -376,16 +372,16 @@ impl ParticleEmitter {
     pub fn emit_at(&mut self, pt: Vec2, rotation: f32, color: Color) {
         self.emitter.config.initial_rotation = rotation;
         self.emitter.config.base_color = color;
-        self.emitter.emit(&self.emitter_config, pt, 1);
+        self.emitter.emit(pt, 1);
         if !self.hide_particles {
             self.emitter_square.config.base_color = color;
-            self.emitter_square.emit(&self.emitter_square_config, pt, 4);
+            self.emitter_square.emit(pt, 4);
         }
     }
 
     pub fn draw(&mut self, dt: f32) {
-        self.emitter.draw(&self.emitter_config, vec2(0., 0.), dt);
-        self.emitter_square.draw(&self.emitter_config, vec2(0., 0.), dt);
+        self.emitter.draw(vec2(0., 0.), dt);
+        self.emitter_square.draw(vec2(0., 0.), dt);
     }
 
     pub fn set_scale(&mut self, scale: f32) {

@@ -348,7 +348,7 @@ impl AtlasConfig {
 impl Default for EmitterConfig {
     fn default() -> EmitterConfig {
         EmitterConfig {
-            max_particles: 600000,
+            max_particles: 20000,
             rng: None,
             local_coords: false,
             emission_shape: EmissionShape::Point,
@@ -568,8 +568,8 @@ impl Emitter {
         self.mesh_dirty = true;
     }
 
-    fn emit_particle(&mut self, config: &EmitterConfig, offset: Vec2) {
-        if self.gpu_particles.len() == config.max_particles {
+    fn emit_particle(&mut self, offset: Vec2) {
+        if self.gpu_particles.len() == self.config.max_particles {
             return;
         }
         let offset = offset + self.config.emission_shape.gen_random_point();
@@ -631,7 +631,7 @@ impl Emitter {
         });
     }
 
-    fn update(&mut self, config: &EmitterConfig, ctx: &mut Context, dt: f32) {
+    fn update(&mut self, ctx: &mut Context, dt: f32) {
         if self.mesh_dirty {
             self.bindings = self
                 .config
@@ -656,7 +656,7 @@ impl Emitter {
                 self.last_emit_time = self.time_passed;
 
                 if self.particles_spawned < self.config.amount as u64 {
-                    self.emit_particle(config, vec2(0.0, 0.0));
+                    self.emit_particle(vec2(0.0, 0.0));
                 }
 
                 if self.gpu_particles.len() >= self.config.amount as usize {
@@ -731,9 +731,9 @@ impl Emitter {
     }
 
     /// Immediately emit N particles, ignoring "emitting" and "amount" params of EmitterConfig
-    pub fn emit(&mut self, config: &EmitterConfig, pos: Vec2, n: usize) {
+    pub fn emit(&mut self, pos: Vec2, n: usize) {
         for _ in 0..n {
-            self.emit_particle(config, pos);
+            self.emit_particle(pos);
             self.particles_spawned += 1;
         }
     }
@@ -799,7 +799,7 @@ impl Emitter {
         }
     }
 
-    pub fn draw(&mut self, config: &EmitterConfig, pos: Vec2, dt: f32) {
+    pub fn draw(&mut self, pos: Vec2, dt: f32) {
         let mut gl = unsafe { get_internal_gl() };
 
         gl.flush();
@@ -808,7 +808,7 @@ impl Emitter {
 
         self.position = pos;
 
-        self.update(config, ctx, dt);
+        self.update(ctx, dt);
 
         self.setup_render_pass(quad_gl, ctx);
         self.perform_render_pass(quad_gl, ctx);
