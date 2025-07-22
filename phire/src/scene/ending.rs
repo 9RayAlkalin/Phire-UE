@@ -86,7 +86,7 @@ impl EndingScene {
         let bgm = audio.create_music(
             endings[index].clone(),
             MusicParams {
-                amplifier: config.volume_music,
+                amplifier: config.volume_bgm,
                 loop_mix_time: 0.,
                 ..Default::default()
             },
