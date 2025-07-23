@@ -2,12 +2,6 @@ use bitflags::bitflags;
 use once_cell::sync::Lazy;
 use serde::{Deserialize, Serialize};
 
-pub static TIPS: Lazy<Vec<String>> = Lazy::new(|| 
-    include_str!("tips.txt").split('\n')
-    //.map(str::to_owned)
-    .map(|s| format!("{}", s))
-    .collect());
-
 bitflags! {
     #[derive(Clone, Copy, Default, Deserialize, Serialize, PartialEq, Eq, Debug)]
     #[serde(transparent)]

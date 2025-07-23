@@ -92,7 +92,13 @@ impl LoadingScene {
             .map(|(ill, back)| (ill.into(), back.into()))
             .unwrap_or_else(|| (BLACK_TEXTURE.clone(), BLACK_TEXTURE.clone()));
         if info.tip.is_none() {
-            info.tip = Some(crate::config::TIPS.choose(&mut thread_rng()).unwrap().to_owned());
+            let tips_file = load_file(format!("tips.txt").as_str()).await?;
+            let tips = String::from_utf8_lossy(&tips_file)
+                .lines()
+                .map(|line| line.to_string())
+                .collect::<Vec<_>>();
+
+            info.tip = Some(tips.choose(&mut thread_rng()).unwrap().to_owned());
         }
         let future = Box::pin(GameScene::new(mode, info.clone(), config.clone(), fs, player, background.clone(), illustration.clone(), upload_fn, update_fn));
         let charter = Regex::new(r"\[!:[0-9]+:([^:]*)\]").unwrap().replace_all(&info.charter, "$1").to_string();
