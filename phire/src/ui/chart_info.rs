@@ -161,6 +161,11 @@ pub fn render_chart_info(ui: &mut Ui, edit: &mut ChartInfoEdit, width: f32) -> (
             ui.text(tl!("aspect-hint")).pos(0.02, 0.).size(0.35).max_width(len).multiline().draw().h + 0.03
         }));
 
+        ui.dx(0.01);
+        let r = ui.checkbox(tl!("force-aspect-ratio"), &mut info.force_aspect_ratio);
+        dy!(r.h + s);
+        ui.dx(-0.01);
+
         let mut string = format!("{}", info.score_total);
         let mut changed = false;
         let r = ui.input(tl!("score-total"), &mut string, (len, &mut changed));
