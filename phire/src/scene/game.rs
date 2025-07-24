@@ -57,7 +57,7 @@ const PAUSE_BACKGROUND_ALPHA: f32 = 0.6;
 #[derive(Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct SimpleRecord {
-    pub score: i32,
+    pub score: u32,
     pub accuracy: f32,
     pub full_combo: bool,
 }
@@ -385,7 +385,7 @@ impl GameScene {
                 .push(Effect::new(0.0..f32::INFINITY, include_str!("fxaa.glsl"), Vec::new(), false).unwrap());
         }
 
-        let judge = Judge::new(&chart, info.score_total);
+        let judge = Judge::new(&chart);
 
         let info_offset = info.offset;
         let mut res = Resource::new(
@@ -519,14 +519,13 @@ impl GameScene {
             ui.fill_circle(pause_center.x, pause_center.y, 0.05 * scale_ratio, Color::new(1., 1., 1., 0.5));
         }
 
+        let score = (self.judge.score() as f64 / 1_000_000. * res.info.score_total as f64) as u32;
         let score = if res.config.roman {
-            Self::int_to_roman(self.judge.score())
+            Self::int_to_roman(score)
         } else if res.config.chinese {
-            Self::int_to_chinese(self.judge.score())
+            Self::int_to_chinese(score)
         }
         else {
-            let width = self.judge.inner.score_total.to_string().len();
-            format!("{:0>width$}", self.judge.score(), width = width)
         };
         let score_top = top + eps * 2.8125 - (1. - p) * 0.4;
         let score_right = aspect_ratio - margin + 0.001;
