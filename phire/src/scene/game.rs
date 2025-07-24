@@ -1380,7 +1380,7 @@ impl Scene for GameScene {
             //let alpha = res.alpha * (1. - dim_alpha) + dim_alpha;    
             let dim = Color::new(0.1, 0.1, 0.1, dim_alpha * res.alpha);
             let x_range = vp.0 as f32 / ui.viewport.2 as f32;
-            let y_range = vp.1 as f32 / ui.viewport.3 as f32;
+            let y_range =  vp.1 as f32 / vp.3 as f32;
             draw_rectangle(-1., -h,x_range * 2., h * 2., dim); // Left
             draw_rectangle(1., -h,-x_range * 2., h * 2., dim); // Right
             draw_rectangle(-1., -h,2., -y_range * 2., dim); // Top
