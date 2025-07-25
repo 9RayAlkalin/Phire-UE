@@ -1,3 +1,3 @@
-# Phire
+# Phire-UE
 
-[Phi Recorder](https://github.com/2278535805/Phi-Recorder)
+仅供个人学习使用，不提供Releases，请移步Phire仓库获取更新
