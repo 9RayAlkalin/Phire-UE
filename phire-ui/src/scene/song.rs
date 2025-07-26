@@ -1910,6 +1910,7 @@ impl Scene for SongScene {
         let icon = self.record.as_ref().map_or(7, |it| icon_index(it.score as _, it.full_combo));
         ui.fill_rect(r, (*self.rank_icons[icon], r, ScaleType::Fit, c));
         let score = self.record.as_ref().map(|it| it.score).unwrap_or_default();
+        let score = (score as f64 / 1_000_000.0 * self.info.score_total as f64) as u32;
         let accuracy = self.record.as_ref().map(|it| it.accuracy).unwrap_or_default();
         let r = ui
             .text(format!("{score:07}"))

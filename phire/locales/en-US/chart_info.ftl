@@ -13,6 +13,7 @@ preview-too-short = Preview too short
 preview-too-long = Preview too long
 offset = Offset(s)
 aspect-ratio = Aspect ratio
+force-aspect-ratio = Force aspect ratio
 ps = P.S.
 aspect-hint = Aspect ratio can be either real number or texts like "w:h"
 score-total = Total score

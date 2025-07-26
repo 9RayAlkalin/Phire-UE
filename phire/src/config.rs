@@ -1,5 +1,4 @@
 use bitflags::bitflags;
-use once_cell::sync::Lazy;
 use serde::{Deserialize, Serialize};
 
 bitflags! {
@@ -43,7 +42,6 @@ pub struct Config {
     pub all_good: bool,
     pub all_bad: bool,
     pub double_click_to_pause: bool,
-    pub fix_aspect_ratio: bool,
     pub fxaa: bool,
     pub interactive: bool,
     pub note_scale: f32,
@@ -116,7 +114,6 @@ impl Default for Config {
             all_good: false,
             all_bad: false,
             double_click_to_pause: true,
-            fix_aspect_ratio: false,
             fxaa: false,
             interactive: true,
             mods: Mods::default(),

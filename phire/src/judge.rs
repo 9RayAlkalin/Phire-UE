@@ -155,12 +155,11 @@ pub(crate) struct JudgeInner {
     max_combo: u32,
     counts: [u32; 4],
     num_of_notes: u32,
-    pub score_total: u32,
 }
 
 #[cfg(not(feature = "closed"))]
 impl JudgeInner {
-    pub fn new(num_of_notes: u32, score_total: u32) -> Self {
+    pub fn new(num_of_notes: u32) -> Self {
         Self {
             diffs: Vec::new(),
 
@@ -168,7 +167,6 @@ impl JudgeInner {
             max_combo: 0,
             counts: [0; 4],
             num_of_notes,
-            score_total,
         }
     }
 
@@ -212,9 +210,9 @@ impl JudgeInner {
 
     pub fn score(&self) -> u32 {
         if self.counts[0] == self.num_of_notes {
-            self.score_total
+            1_000_000
         } else {
-            let score = (0.9 * self.accuracy() + self.max_combo as f64 / self.num_of_notes as f64 * 0.1) * self.score_total as f64;
+            let score = (0.9 * self.accuracy() + self.max_combo as f64 / self.num_of_notes as f64 * 0.1) * 1_000_000.;
             score.round() as u32
         }
     }
@@ -267,7 +265,7 @@ thread_local! {
 }
 
 impl Judge {
-    pub fn new(chart: &Chart, score_total: u32) -> Self {
+    pub fn new(chart: &Chart) -> Self {
         let notes = chart
             .lines
             .iter()
@@ -284,7 +282,7 @@ impl Judge {
 
             key_down_count: 0,
 
-            inner: JudgeInner::new(chart.lines.iter().map(|it| it.notes.iter().filter(|it| !it.fake).count() as u32).sum(), score_total),
+            inner: JudgeInner::new(chart.lines.iter().map(|it| it.notes.iter().filter(|it| !it.fake).count() as u32).sum()),
             judgements: RefCell::new(Vec::new()),
         }
     }

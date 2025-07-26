@@ -375,7 +375,14 @@ impl Scene for EndingScene {
             };
             let pa = ran(t, A_SCORE_ALPHA_START, A_SCORE_ALPHA_END);
             let r = draw_text_aligned(ui, &text, main.x + dx + 0.01, main.bottom() - 0.040, (0., 1.), 0.34, Color::new(1., 1., 1., pa)); // 分数下面的字
-            let score = if self.config.roman {GameScene::int_to_roman(res.score)} else if self.config.chinese {GameScene::int_to_chinese(res.score)} else {format!("{:07}", res.score)};
+            let score = (res.score as f64 / 1_000_000. * self.info.score_total as f64) as u32;
+            let score = if self.config.roman {
+                GameScene::int_to_roman(score)
+            } else if self.config.chinese {
+                GameScene::int_to_chinese(score)
+            } else {
+                format!("{:07}", score)
+            };
             let r = draw_text_aligned_fix(ui, &score, r.x - 0.012, r.y - 0.019, (0., 1.), 1.05, Color::new(1., 1., 1., pa), 0.4); // 分数
             let pa = ran(t, A_ICON_ALPHA_START, A_ICON_ALPHA_END);
             let ps = ran(t, A_ICON_SCALE_START, A_ICON_SCALE_END).powi(3);
