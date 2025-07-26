@@ -137,7 +137,8 @@ pub struct RPEJudgeLine {
     #[serde(default, rename = "rotateWithFather")]
     rotate_with_parent: bool,
     anchor: Option<[f32; 2]>,
-    bpmfactor: f32,
+    #[serde(default="f32_one", rename = "bpmfactor")]
+    bpm_factor: f32,
     event_layers: Vec<Option<RPEEventLayer>>,
     extended: Option<RPEExtendedEvents>,
     notes: Option<Vec<RPENote>>,
@@ -429,7 +430,7 @@ async fn parse_judge_line(
 ) -> Result<JudgeLine> {
     let mut line_texture_map: HashMap<String, SafeTexture> = Default::default();
     let event_layers: Vec<_> = rpe.event_layers.into_iter().flatten().collect();
-    let r = &mut BpmList::new(bpm_list.into_iter().map(|it| (it.start_time.beats(), it.bpm / rpe.bpmfactor)).collect());
+    let r = &mut BpmList::new(bpm_list.into_iter().map(|it| (it.start_time.beats(), it.bpm / rpe.bpm_factor)).collect());
 
     fn events_with_factor(
         r: &mut BpmList,
